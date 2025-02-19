@@ -2,8 +2,35 @@ package main
 
 import "os/exec"
 import "os"
+
+import "path/filepath"
 import "log/slog"
 import "strings"
+
+func outdated(target string, sources ...string) bool {
+	stat, err := os.Stat(target)
+	if err != nil {
+		return true
+	}
+	for _, source := range sources {
+		matches, err := filepath.Glob(source)
+		if err != nil {
+			slog.Error("outdated", err, err)
+			return true
+		}
+		for _, match := range matches {
+			matchStat, err := os.Stat(match)
+			if err != nil {
+				slog.Error("outdated", err, err)
+				return true
+			}
+			if stat.ModTime().Before(matchStat.ModTime()) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func runEnv(env []string, command string, args ...string) {
 	cmd := exec.Command(command, args...)
@@ -33,8 +60,12 @@ func run(command string, args ...string) {
 }
 
 func build() {
-	runEnv([]string{"GOARCH=wasm", "GOOS=js"}, "go", "build", "-o", "web/app.wasm", "./cmd/qrochet")
-	run("go", "build", "./cmd/qrochet")
+	if outdated("web/app.wasm", "pkg/*/*.go", "cmd/*/*.go") {
+		runEnv([]string{"GOARCH=wasm", "GOOS=js"}, "go", "build", "-o", "web/app.wasm", "./cmd/qrochet")
+		run("go", "build", "./cmd/qrochet")
+	} else {
+		slog.Info("build skipped, all targets up to date")
+	}
 }
 
 func qrochet() {
