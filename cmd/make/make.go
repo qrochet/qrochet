@@ -62,14 +62,22 @@ func run(command string, args ...string) {
 func build() {
 	if outdated("web/app.wasm", "pkg/*/*.go", "cmd/*/*.go") {
 		runEnv([]string{"GOARCH=wasm", "GOOS=js"}, "go", "build", "-o", "web/app.wasm", "./cmd/qrochet")
-		run("go", "build", "./cmd/qrochet")
+		run("go", "build", "-o", "build/qrochet", "./cmd/qrochet")
 	} else {
 		slog.Info("build skipped, all targets up to date")
 	}
 }
 
 func qrochet() {
-	run("./qrochet")
+	run("./build/qrochet")
+}
+
+func self() {
+	if outdated("build/make", "cmd/make/*.go") {
+		run("go", "build", "-o", "build/make", "./cmd/make")
+	} else {
+		slog.Info("build skipped, all targets up to date")
+	}
 }
 
 func target() string {
@@ -83,6 +91,8 @@ func main() {
 	switch target() {
 	case "build":
 		build()
+	case "self":
+		self()
 	default:
 		build()
 		qrochet()

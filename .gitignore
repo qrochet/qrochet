@@ -27,3 +27,5 @@ go.work.sum
 # executable files
 qrochet
 web/app.wasm
+build/qrochet
+build/make
