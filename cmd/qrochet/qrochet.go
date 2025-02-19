@@ -1,5 +1,7 @@
 package main
 
+import "github.com/qrochet/qrochet/pkg/app"
+
 func main() {
-	println("Development of qrochet started!")
+	app.ListenAndServe()
 }

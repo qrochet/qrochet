@@ -1,0 +1,4 @@
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/maxence-charriere/go-app/v10 v10.0.10 h1:gMSfuo63AGQZOT09KwoMOC97q0UIkMzuB4+npuANz/M=
+github.com/maxence-charriere/go-app/v10 v10.0.10/go.mod h1:/JHvScvAOZZ/cYTV3Se+0hLagUSivQBKb3PePXu7OoM=
