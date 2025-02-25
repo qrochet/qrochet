@@ -50,9 +50,11 @@ func results2Values(results []Result) []Value {
 }
 
 func (j *Jef) ref(info expr.RefInfo, ctx *expr.Context) (expr.Value, error) {
-	r := j.gr.Get(info.Ident)
-	if r.Type != gjson.Null {
-		return result2Value(r), nil
+	if gj, ok := ctx.UserData.(Result); ok {
+		r := gj.Get(info.Ident)
+		if r.Type != gjson.Null {
+			return result2Value(r), nil
+		}
 	}
 
 	val, ok := os.LookupEnv(info.Ident)
@@ -117,7 +119,7 @@ func (j *Jef) EvalString(ex string) (expr.Value, error) {
 // EvalJSON evaluates expr with the given byte arrays, which should be in JSON
 // format as the data based on the expression ex.
 func (j *Jef) EvalJSON(ex string, js []byte) (Value, error) {
-	j.gr = gjson.ParseBytes(js)
+	j.Context.UserData = gjson.ParseBytes(js)
 	res, err := expr.Eval(ex, j.Context)
 	return res, err
 }
