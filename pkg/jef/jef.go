@@ -8,9 +8,6 @@ import "math"
 import "github.com/tidwall/expr"
 import "github.com/tidwall/gjson"
 
-// Value is an expr value
-type Value = expr.Value
-
 // Result is a result of a gjson parse
 type Result = gjson.Result
 
@@ -73,7 +70,33 @@ func (j *Jef) op(info expr.OpInfo, ctx *expr.Context) (expr.Value, error) {
 	return expr.Undefined, nil
 }
 
+type ReferenceFunc func(context *Context, name string) Value
+type CallFunc func(context *Context, args ...Value) Value
+type MethodFunc func(context *Context, self Value, args ...Value) Value
+type OperatorFunc func(context *Context, left, op, right string) Value
+
+type Reference interface {
+	LookupReference(context *Context, name string) Value
+}
+
+type Caller interface {
+	Call(context *Context, args ...Value) Value
+}
+
+type Method interface {
+	CallMethod(context *Context, self Value, args ...Value) Value
+}
+
+type Operator interface {
+	ApplyOperator(context *Context, left, op, right string) Value
+}
+
 type Jef struct {
+	refs map[string]Reference
+	mets map[string]Method
+	cals map[string]Caller
+	opes map[string]Operator
+
 	*expr.Context
 	gr gjson.Result
 }
