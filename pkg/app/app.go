@@ -2,13 +2,18 @@
 package app
 
 import "net/http"
+import "net/utl"
 import "os"
 import "log/slog"
 
-import "github.com/maxence-charriere/go-app/v10/pkg/app"
+
+import (
+	"github.com/maxence-charriere/go-app/v10/pkg/app"
+)
 
 type Qrochet struct {
 	app.Compo
+	http.Client
 
 	name string
 }
