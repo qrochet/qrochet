@@ -1,0 +1,91 @@
+/* CSS3 for Qrochet. */
+
+body {
+    font-family: "Mochiy Pop One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    background: linear-gradient(to right, #ffccff, #ffb3ff);
+    height: 100vh;
+    outline: 2px dashed #E3F2FD;
+  	outline-offset: -10px;
+  	padding: 20px;
+}
+
+h1 {
+   margin: auto;
+}
+
+h2 {
+   margin: auto;
+}
+
+div {
+   margin: auto;
+}
+
+
+form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    transition: box-shadow 0.3s ease;
+    margin: auto;
+    width: 50%;
+ 	outline: 2px dashed #E3F2FD;
+  	outline-offset: -10px;
+}
+
+form:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #8B008B; /* Dark Magenta */
+}
+
+input[type="email"],
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+    border-color: #FF69B4; /* Hot Pink */
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #FF69B4; /* Hot Pink */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #FF1493; /* Deep Pink */
+}
+
+button:active {
+    background-color: #C71585; /* Medium Violet Red */
+}
+

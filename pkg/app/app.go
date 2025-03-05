@@ -2,65 +2,137 @@
 package app
 
 import "net/http"
-import "net/utl"
+import "net"
 import "os"
+import "io/fs"
 import "log/slog"
-
+import "context"
+import "embed"
+import "html/template"
+import "strconv"
 
 import (
-	"github.com/maxence-charriere/go-app/v10/pkg/app"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
+//go:embed web
+var resources embed.FS
+
+//go:embed tmpl
+var templates embed.FS
+
 type Qrochet struct {
-	app.Compo
-	http.Client
-
-	name string
+	http.Server
+	*http.ServeMux
+	*nats.Conn
+	jetstream.JetStream
+	*template.Template
+	sub fs.FS
 }
 
-/*
-func (q *Qrochet) Render() app.UI {
-	return app.Div().Body(
-		app.H1().Body(
-			app.Text("Hello, "),
-			app.If(q.name != "", func() app.UI {
-				return app.Text(q.name)
-			}).Else(func() app.UI {
-				return app.Text("World!")
-			}),
-		),
-		app.P().Body(
-			app.Input().
-				Type("text").
-				Value(q.name).
-				Placeholder("What is your name?").
-				AutoFocus(true).
-				OnChange(q.ValueTo(&q.name)),
-		),
+func New(ctx context.Context, addr, nurl string) (*Qrochet, error) {
+	var err error
+	q := &Qrochet{}
+
+	q.Template = template.New("")
+	q.Template, err = q.Template.ParseFS(templates, "tmpl/*.tmpl.html")
+	if err != nil {
+		return nil, err
+	}
+
+	q.Server.Addr = addr
+	q.ServeMux = http.NewServeMux()
+	q.Server.Handler = q.ServeMux
+	q.sub, err = fs.Sub(resources, "web")
+	if err != nil {
+		return nil, err
+	}
+
+	entries, err := resources.ReadDir("web")
+	for _, entry := range entries {
+		slog.Info("Available Resource: ", "entry", entry)
+	}
+	if err != nil {
+		slog.Error("readdir", "err", err)
+	}
+
+	q.Conn, err = nats.Connect(nurl)
+	if err != nil {
+		return nil, err
+	}
+	slog.Info("NATS connected", "nurl", nurl)
+	q.JetStream, err = jetstream.New(q.Conn)
+	if err != nil {
+		return nil, err
+	}
+	slog.Info("JETSTREAM connected", "js", q.JetStream)
+	return q, nil
+}
+
+func (q *Qrochet) Close() {
+	slog.Info("qrochet shutting down")
+	q.Conn.Close()
+	q.Server.Close()
+}
+
+type view struct {
+	Register struct {
+		Name   string
+		Email  string
+		Submit bool
+	}
+}
+
+func (q *Qrochet) view() *view {
+	return &view{}
+}
+
+func (q *Qrochet) index(wr http.ResponseWriter, req *http.Request) {
+	view := q.view()
+	slog.Info("index")
+	wr.Write([]byte("<!DOCTYPE html>"))
+	err := q.Template.ExecuteTemplate(wr, "index.tmpl.html", view)
+	if err != nil {
+		slog.Error("index", err)
+	}
+}
+
+func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
+	view := q.view()
+	slog.Info("register")
+	err := req.ParseForm()
+	if err != nil {
+		slog.Error("register req.ParseForm", err)
+	}
+	view.Register.Name = req.FormValue("name")
+	view.Register.Email = req.FormValue("email")
+	view.Register.Submit, _ = strconv.ParseBool(req.FormValue("submit"))
+	err = q.Template.ExecuteTemplate(wr, "register.tmpl.html", view)
+	if err != nil {
+		slog.Error("register", err)
+	}
+}
+
+func (q *Qrochet) ListenAndServe(ctx context.Context) {
+	// Routing
+	q.Server.BaseContext = func(_ net.Listener) context.Context {
+		return ctx
+	}
+	q.ServeMux.HandleFunc("/", q.index)
+	q.ServeMux.HandleFunc("/register", q.register)
+	q.ServeMux.Handle("/web/",
+		http.StripPrefix("/web/", http.FileServer(http.FS(q.sub))),
 	)
-}*/
 
-// The Render method is where the component appearance is defined. Here, a
-// "Hello World!" is displayed as a heading.
-func (q *Qrochet) Render() app.UI {
-	return app.H1().Text("Hello Qrochet!")
-}
+	defer func() {
+		<-ctx.Done()
+		slog.Info("qrochet interrupted")
+		q.Server.Shutdown(ctx)
+	}()
 
-func ListenAndServe() {
-	// Components routing:
-	app.Route("/", func() app.Composer { return &Qrochet{} })
-	app.Route("/qrochet", func() app.Composer { return &Qrochet{} })
-	app.RunWhenOnBrowser()
-
-	// HTTP routing:
-	http.Handle("/", &app.Handler{
-		Name:        "Qrochet",
-		Description: "Qrochet handler",
-	})
-
-	port := ":9637"
-	slog.Info("Qtarting Qrochet on port", "port", port)
-	if err := http.ListenAndServe(port, nil); err != nil {
+	slog.Info("Starting Qrochet", "addr", q.Server.Addr)
+	if err := q.Server.ListenAndServe(); err != nil {
 		slog.Error("ListenAndServe", "err", err)
 		os.Exit(1)
 	}

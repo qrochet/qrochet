@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <link rel="stylesheet" href="/web/qrochet.css">
+</head>
+<body>
+<div id="register">
+	{{ if .Register.Submit }}
+		<div>Test registration: {{.Register.Email}} {{.Register.Name}}</div>
+	{{ else }}
+	<form action="/register#register" method="post" enctype="multipart/form-data" target="htmz">
+	<label for="email">Email</label>
+	<input type="email" id="email" name="email" required="1" value="{{.Register.Email}}" />
+	<br/>
+	<label for="name">Display Name</label>
+	<input type="text" id="name" name="name" required="1" value="{{.Register.Name}}" />
+	<br/>
+	<label for="pass">Password</label>
+	<input type="text" id="pass" name="pass" required="1" />
+	<br/>
+	<label for="captcha">Two plus three is?</label>
+	<input type="number" id="captcha" name="capcha" required="1" />
+	<br/>
+	<button type="submit" value="true" >Register</button>
+	<br/>
+	</form>
+	{{ end }}
+</div>
+</body>
+</html>
