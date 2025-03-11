@@ -15,21 +15,21 @@ body {
 h1 {
    margin: auto;
    width: 80%;
-   text-align: center; 
+   text-align: center;
 }
 
 h2 {
    margin: auto;
-   width: 80%; 
+   width: 80%;
    text-align: center;
    padding-bottom: 1em;
 }
 
 div {
    margin: auto;
-   width: 80%;  
+   width: 80%;
    text-align: center;
-   padding-bottom: 1em; 
+   padding-bottom: 1em;
 }
 
 

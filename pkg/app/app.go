@@ -40,26 +40,35 @@ func New(ctx context.Context, s Settings) (*Qrochet, error) {
 	q := &Qrochet{}
 
 	q.Template = template.New("")
-	q.Template, err = q.Template.ParseFS(templates, "tmpl/*.tmpl.html")
-	if err != nil {
-		return nil, err
+
+	if s.Dev {
+		q.Template, err = q.Template.ParseGlob("pkg/app/tmpl/*.tmpl.html")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		q.Template, err = q.Template.ParseFS(templates, "tmpl/*.tmpl.html")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	q.Server.Addr = s.Addr
 	q.ServeMux = http.NewServeMux()
 	q.Server.Handler = q.ServeMux
-	q.sub, err = fs.Sub(resources, "web")
-	if err != nil {
-		return nil, err
+	if s.Dev {
+		q.sub = os.DirFS("pkg/app/web")
+	} else {
+		q.sub, err = fs.Sub(resources, "web")
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	entries, err := resources.ReadDir("web")
-	for _, entry := range entries {
-		slog.Info("Available Resource: ", "entry", entry)
-	}
-	if err != nil {
-		slog.Error("readdir", "err", err)
-	}
+	fs.WalkDir(q.sub, "", func(path string, d fs.DirEntry, err error) error {
+		slog.Info("Available Resource: ", "path", path, "entry", d)
+		return nil
+	})
 
 	q.Repository, err = repo.Open(s.NATS)
 	if err != nil {
