@@ -21,6 +21,12 @@ var resources embed.FS
 //go:embed tmpl
 var templates embed.FS
 
+type Settings struct {
+	NATS string
+	Addr string
+	Dev  bool
+}
+
 type Qrochet struct {
 	http.Server
 	*http.ServeMux
@@ -29,7 +35,7 @@ type Qrochet struct {
 	sub fs.FS
 }
 
-func New(ctx context.Context, addr, nurl string) (*Qrochet, error) {
+func New(ctx context.Context, s Settings) (*Qrochet, error) {
 	var err error
 	q := &Qrochet{}
 
@@ -39,7 +45,7 @@ func New(ctx context.Context, addr, nurl string) (*Qrochet, error) {
 		return nil, err
 	}
 
-	q.Server.Addr = addr
+	q.Server.Addr = s.Addr
 	q.ServeMux = http.NewServeMux()
 	q.Server.Handler = q.ServeMux
 	q.sub, err = fs.Sub(resources, "web")
@@ -55,11 +61,11 @@ func New(ctx context.Context, addr, nurl string) (*Qrochet, error) {
 		slog.Error("readdir", "err", err)
 	}
 
-	q.Repository, err = repo.Open(nurl)
+	q.Repository, err = repo.Open(s.NATS)
 	if err != nil {
 		return nil, err
 	}
-	slog.Info("NATS connected", "nurl", nurl)
+	slog.Info("NATS connected", "URL", s.NATS)
 	return q, nil
 }
 

@@ -2,23 +2,77 @@ package main
 
 import "flag"
 import "os"
+import "io"
 import "log/slog"
+import "log/syslog"
 import "context"
 
 // import "os/signal"
 
 import "github.com/qrochet/qrochet/pkg/app"
+import "github.com/qrochet/qrochet/pkg/env"
+
+func setupSlog(level slog.Level, format, output, tag string) {
+	// Determine the log format
+	var handler slog.Handler
+	var out io.Writer = os.Stdout
+
+	// Determine the log output
+	if output == "syslog" {
+		syslogLogger, err := syslog.New(syslog.LOG_INFO|syslog.LOG_DAEMON, tag)
+		if err != nil {
+			panic("Failed to connect to syslog:" + err.Error())
+		}
+		out = syslogLogger
+	} else if output != "" {
+		file, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic("Failed to open log file:" + err.Error())
+		}
+		out = file
+	}
+
+	switch format {
+	case "json", "JSON":
+		handler = slog.NewJSONHandler(out, &slog.HandlerOptions{Level: level})
+	case "text", "TEXT":
+		handler = slog.NewTextHandler(out, &slog.HandlerOptions{Level: level})
+	default:
+		handler = slog.NewTextHandler(out, &slog.HandlerOptions{
+			Level: level,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				var zero slog.Attr
+				if a.Key == "time" {
+					return zero
+				}
+				return a
+			},
+		})
+	}
+	// Create the logger
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+}
 
 func main() {
-	var nats, addr string
-	flag.StringVar(&nats, "n", os.Getenv("QROCHET_NATS"), "nats server to connect to, or nats+builtin:///path for a built in NATS server.")
-	flag.StringVar(&addr, "a", os.Getenv("QROCHET_ADDR"), "address to listen on")
+	var level = slog.LevelInfo
+	var format = env.String("SLOG_FORMAT", "text")
+	var output = env.String("SLOG_OUTPUT", "")
+
+	var set app.Settings
+	flag.StringVar(&set.NATS, "n", env.String("QROCHET_NATS"), "QROCHET_NATS\tnats server to connect to, or nats+builtin:///path for a built in NATS server.")
+	flag.StringVar(&set.Addr, "a", env.String("QROCHET_ADDR"), "QROCHET_ADDR\taddress to listen on")
+	flag.BoolVar(&set.Dev, "D", env.Bool("QROCHET_DEV"), "QROCHET_DEV\tset to true to enable dev mode and use local resources.")
+	flag.TextVar(&level, "L", slog.LevelInfo, "log level to use")
 	flag.Parse()
+
+	setupSlog(level, format, output, "qrochet")
+	slog.Info("slog set up", "level", level, "format", format, "output", output)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	q, err := app.New(ctx, addr, nats)
+	q, err := app.New(ctx, set)
 	if err != nil {
 		slog.Error("app.New", "err", err)
 		os.Exit(2)
