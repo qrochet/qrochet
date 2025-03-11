@@ -3,6 +3,7 @@
 package repo
 
 import "context"
+import "net/url"
 import "encoding/json"
 
 import nsrv "github.com/nats-io/nats-server/v2/server"
@@ -17,19 +18,32 @@ type Repository struct {
 	jetstream.JetStream
 }
 
-func Open(sd string) (r *Repository, err error) {
-	opts := nsrv.Options{
-		JetStream: true,
-		StoreDir:  sd,
+func Open(nurl string) (r *Repository, err error) {
+	u, err := url.Parse(nurl)
+	if err != nil {
+		return nil, err
 	}
+
 	r = &Repository{}
-	r.Server, err = nsrv.NewServer(&opts)
-	if err != nil {
-		return nil, err
-	}
-	r.Conn, err = nats.Connect("", nats.InProcessServer(r.Server))
-	if err != nil {
-		return nil, err
+
+	if u.Scheme == "nats+builtin" {
+		opts := nsrv.Options{
+			JetStream: true,
+			StoreDir:  u.Path,
+		}
+		r.Server, err = nsrv.NewServer(&opts)
+		if err != nil {
+			return nil, err
+		}
+		r.Conn, err = nats.Connect("", nats.InProcessServer(r.Server))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		r.Conn, err = nats.Connect(nurl)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	r.JetStream, err = jetstream.New(r.Conn)

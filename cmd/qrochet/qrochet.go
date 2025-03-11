@@ -11,7 +11,7 @@ import "github.com/qrochet/qrochet/pkg/app"
 
 func main() {
 	var nats, addr string
-	flag.StringVar(&nats, "n", os.Getenv("QROCHET_NATS"), "nats server to connect to, or builtin")
+	flag.StringVar(&nats, "n", os.Getenv("QROCHET_NATS"), "nats server to connect to, or nats+builtin:///path for a built in NATS server.")
 	flag.StringVar(&addr, "a", os.Getenv("QROCHET_ADDR"), "address to listen on")
 	flag.Parse()
 

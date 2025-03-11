@@ -12,8 +12,7 @@ import "html/template"
 import "strconv"
 
 import (
-	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nats.go/jetstream"
+	"github.com/qrochet/qrochet/pkg/repo"
 )
 
 //go:embed web
@@ -25,8 +24,7 @@ var templates embed.FS
 type Qrochet struct {
 	http.Server
 	*http.ServeMux
-	*nats.Conn
-	jetstream.JetStream
+	*repo.Repository
 	*template.Template
 	sub fs.FS
 }
@@ -57,22 +55,17 @@ func New(ctx context.Context, addr, nurl string) (*Qrochet, error) {
 		slog.Error("readdir", "err", err)
 	}
 
-	q.Conn, err = nats.Connect(nurl)
+	q.Repository, err = repo.Open(nurl)
 	if err != nil {
 		return nil, err
 	}
 	slog.Info("NATS connected", "nurl", nurl)
-	q.JetStream, err = jetstream.New(q.Conn)
-	if err != nil {
-		return nil, err
-	}
-	slog.Info("JETSTREAM connected", "js", q.JetStream)
 	return q, nil
 }
 
 func (q *Qrochet) Close() {
 	slog.Info("qrochet shutting down")
-	q.Conn.Close()
+	q.Repository.Close()
 	q.Server.Close()
 }
 
@@ -91,7 +84,6 @@ func (q *Qrochet) view() *view {
 func (q *Qrochet) index(wr http.ResponseWriter, req *http.Request) {
 	view := q.view()
 	slog.Info("index")
-	wr.Write([]byte("<!DOCTYPE html>"))
 	err := q.Template.ExecuteTemplate(wr, "index.tmpl.html", view)
 	if err != nil {
 		slog.Error("index", err)

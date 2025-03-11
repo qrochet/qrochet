@@ -1,31 +1,40 @@
 /* CSS3 for Qrochet. */
 
 body {
-    font-family: "Mochiy Pop One", sans-serif;
+    font-family: "Darumadrop One", sans-serif;
     font-weight: 400;
     font-style: normal;
-    background: linear-gradient(to right, #ffccff, #ffb3ff);
+
+    background: linear-gradient(to right, beige, khaki);
     height: 100vh;
-    outline: 2px dashed #E3F2FD;
+    outline: 2px dashed whitesmoke;
   	outline-offset: -10px;
   	padding: 20px;
 }
 
 h1 {
    margin: auto;
+   width: 80%;
+   text-align: center; 
 }
 
 h2 {
    margin: auto;
+   width: 80%; 
+   text-align: center;
+   padding-bottom: 1em;
 }
 
 div {
    margin: auto;
+   width: 80%;  
+   text-align: center;
+   padding-bottom: 1em; 
 }
 
 
 form {
-    background-color: #fff;
+    background-color: white;
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -33,7 +42,7 @@ form {
     transition: box-shadow 0.3s ease;
     margin: auto;
     width: 50%;
- 	outline: 2px dashed #E3F2FD;
+ 	outline: 2px dashed whitesmoke;
   	outline-offset: -10px;
 }
 
@@ -45,35 +54,29 @@ label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: #8B008B; /* Dark Magenta */
+    color: saddlebrown;
 }
 
-input[type="email"],
-input[type="text"],
-input[type="password"],
-input[type="number"] {
+input {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #ccc;
+    border: 1px solid gray;
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.3s ease;
 }
 
-input[type="email"]:focus,
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="number"]:focus {
-    border-color: #FF69B4; /* Hot Pink */
+input:focus {
+    border-color: saddlebrown; /* Hot Pink */
     outline: none;
 }
 
 button {
     width: 100%;
     padding: 10px;
-    background-color: #FF69B4; /* Hot Pink */
-    color: #fff;
+    background-color: saddlebrown;
+    color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -82,10 +85,10 @@ button {
 }
 
 button:hover {
-    background-color: #FF1493; /* Deep Pink */
+    background-color: ;
 }
 
 button:active {
-    background-color: #C71585; /* Medium Violet Red */
+    background-color: mediumvioletred;
 }
 
