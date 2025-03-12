@@ -73,7 +73,15 @@ func NewBasicMapper[T any](ctx Context, r *Repository, name string) (*BasicMappe
 	}
 	bm.KeyValue, err = bm.Repository.JetStream.KeyValue(ctx, bm.Name)
 	if err != nil {
-		return nil, err
+		if err == jetstream.ErrBucketNotFound {
+			kvc := jetstream.KeyValueConfig{Bucket: bm.Name}
+			bm.KeyValue, err = bm.Repository.JetStream.CreateKeyValue(ctx, kvc)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 	return bm, nil
 }
@@ -109,17 +117,74 @@ func (b *BasicMapper[T]) Put(ctx Context, key string, obj T) (T, error) {
 }
 
 func (b *BasicMapper[T]) Purge(ctx Context, key string) error {
-	return nil
+	return b.KeyValue.Purge(ctx, key)
 }
 
-func (b *BasicMapper[T]) Watch(ctx Context, pattern string) (chan (T), error) {
-	return nil, nil
+func (b *BasicMapper[T]) Keys(ctx Context, keys ...string) (chan (string), error) {
+	lister, err := b.KeyValue.ListKeysFiltered(ctx, keys...)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan (string))
+	go func() {
+		for res := range lister.Keys() {
+			ch <- res
+		}
+		close(ch)
+	}()
+
+	return ch, nil
 }
 
-func (b *BasicMapper[T]) All(ctx Context, pattern string) (chan (T), error) {
-	return nil, nil
+func (b *BasicMapper[T]) Watch(ctx Context, keys ...string) (chan (T), error) {
+	watcher, err := b.KeyValue.WatchFiltered(ctx, keys,
+		jetstream.UpdatesOnly(), jetstream.IgnoreDeletes())
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan (T))
+	go func() {
+		for res := range watcher.Updates() {
+			var obj T
+			if res == nil {
+				watcher.Stop()
+				break
+			}
+			err = json.Unmarshal(res.Value(), &obj)
+			if err != nil {
+				watcher.Stop()
+				break
+			}
+		}
+		close(ch)
+	}()
+
+	return ch, nil
 }
 
-func (b *BasicMapper[T]) Keys(ctx Context, pattern string) (chan (string), error) {
-	return nil, nil
+func (b *BasicMapper[T]) All(ctx Context, keys ...string) (chan (T), error) {
+	watcher, err := b.KeyValue.WatchFiltered(ctx, keys, jetstream.IgnoreDeletes())
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan (T))
+	go func() {
+		for res := range watcher.Updates() {
+			var obj T
+			if res == nil {
+				watcher.Stop()
+				break
+			}
+			err = json.Unmarshal(res.Value(), &obj)
+			if err != nil {
+				watcher.Stop()
+				break
+			}
+		}
+		close(ch)
+	}()
+
+	return ch, nil
 }
