@@ -92,3 +92,31 @@ button:active {
     background-color: mediumvioletred;
 }
 
+div.error {
+    background-color: white;
+    color: darkred;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    transition: box-shadow 0.3s ease;
+    margin: auto;
+    width: 50%;
+ 	outline: 2px dashed whitesmoke;
+  	outline-offset: -10px;
+}
+
+div.message {
+    background-color: white;
+    color: darkred;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    transition: box-shadow 0.3s ease;
+    margin: auto;
+    width: 50%;
+ 	outline: 2px dashed whitesmoke;
+  	outline-offset: -10px;
+}
+

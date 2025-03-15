@@ -1,6 +1,7 @@
 package main
 
 import "flag"
+import "fmt"
 import "os"
 import "io"
 import "log/slog"
@@ -8,6 +9,8 @@ import "log/syslog"
 import "context"
 
 // import "os/signal"
+
+import "aidanwoods.dev/go-paseto"
 
 import "github.com/qrochet/qrochet/pkg/app"
 import "github.com/qrochet/qrochet/pkg/env"
@@ -54,6 +57,12 @@ func setupSlog(level slog.Level, format, output, tag string) {
 	slog.SetDefault(logger)
 }
 
+func key() {
+	key := paseto.NewV4SymmetricKey()
+	fmt.Printf("Generated PASETO key:\nexport QROCHET_PASETO=%s\n", key.ExportHex())
+	os.Exit(0)
+}
+
 func main() {
 	var level = slog.LevelInfo
 	var format = env.String("SLOG_FORMAT", "text")
@@ -62,9 +71,14 @@ func main() {
 	var set app.Settings
 	flag.StringVar(&set.NATS, "n", env.String("QROCHET_NATS"), "QROCHET_NATS\tnats server to connect to, or nats+builtin:///path for a built in NATS server.")
 	flag.StringVar(&set.Addr, "a", env.String("QROCHET_ADDR"), "QROCHET_ADDR\taddress to listen on")
+	flag.StringVar(&set.Key, "k", env.String("QROCHET_PASETO"), "QROCHET_PASETO\tPASETO private key")
 	flag.BoolVar(&set.Dev, "D", env.Bool("QROCHET_DEV"), "QROCHET_DEV\tset to true to enable dev mode and use local resources.")
 	flag.TextVar(&level, "L", slog.LevelInfo, "log level to use")
 	flag.Parse()
+
+	if len(flag.Args()) > 0 && flag.Args()[0] == "key" {
+		key()
+	}
 
 	setupSlog(level, format, output, "qrochet")
 	slog.Info("slog set up", "level", level, "format", format, "output", output)

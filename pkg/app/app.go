@@ -9,7 +9,7 @@ import "log/slog"
 import "context"
 import "embed"
 import "html/template"
-import "strconv"
+import "aidanwoods.dev/go-paseto"
 
 import (
 	"github.com/qrochet/qrochet/pkg/repo"
@@ -24,6 +24,7 @@ var templates embed.FS
 type Settings struct {
 	NATS string
 	Addr string
+	Key  string
 	Dev  bool
 }
 
@@ -33,11 +34,21 @@ type Qrochet struct {
 	*repo.Repository
 	*template.Template
 	sub fs.FS
+	Key paseto.V4SymmetricKey
 }
 
 func New(ctx context.Context, s Settings) (*Qrochet, error) {
 	var err error
 	q := &Qrochet{}
+
+	if s.Key == "" {
+		q.Key = paseto.NewV4SymmetricKey()
+	} else {
+		q.Key, err = paseto.V4SymmetricKeyFromHex(s.Key)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	q.Template = template.New("")
 
@@ -84,16 +95,8 @@ func (q *Qrochet) Close() {
 	q.Server.Close()
 }
 
-type view struct {
-	Register struct {
-		Name   string
-		Email  string
-		Submit bool
-	}
-}
-
 func (q *Qrochet) view() *view {
-	return &view{}
+	return &view{app: q}
 }
 
 func (q *Qrochet) index(wr http.ResponseWriter, req *http.Request) {
@@ -102,22 +105,6 @@ func (q *Qrochet) index(wr http.ResponseWriter, req *http.Request) {
 	err := q.Template.ExecuteTemplate(wr, "index.tmpl.html", view)
 	if err != nil {
 		slog.Error("index", err)
-	}
-}
-
-func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
-	view := q.view()
-	slog.Info("register")
-	err := req.ParseForm()
-	if err != nil {
-		slog.Error("register req.ParseForm", err)
-	}
-	view.Register.Name = req.FormValue("name")
-	view.Register.Email = req.FormValue("email")
-	view.Register.Submit, _ = strconv.ParseBool(req.FormValue("submit"))
-	err = q.Template.ExecuteTemplate(wr, "register.tmpl.html", view)
-	if err != nil {
-		slog.Error("register", err)
 	}
 }
 

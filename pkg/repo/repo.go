@@ -10,12 +10,17 @@ import nsrv "github.com/nats-io/nats-server/v2/server"
 import nats "github.com/nats-io/nats.go"
 import "github.com/nats-io/nats.go/jetstream"
 
+import "github.com/qrochet/qrochet/pkg/model"
+
 type Context = context.Context
 
 type Repository struct {
 	*nsrv.Server
 	*nats.Conn
 	jetstream.JetStream
+	User    *BasicMapper[model.User]
+	Session *BasicMapper[model.Session]
+	Craft   *BasicMapper[model.Craft]
 }
 
 func Open(nurl string) (r *Repository, err error) {
@@ -50,7 +55,31 @@ func Open(nurl string) (r *Repository, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = r.Setup(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
 	return r, nil
+}
+
+func (r *Repository) Setup(ctx context.Context) error {
+	var err error
+	r.User, err = NewBasicMapper[model.User](ctx, r, "user")
+	if err != nil {
+		return err
+	}
+	r.Session, err = NewBasicMapper[model.Session](ctx, r, "session")
+	if err != nil {
+		return err
+	}
+	r.Craft, err = NewBasicMapper[model.Craft](ctx, r, "craft")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) Close() {
@@ -64,12 +93,14 @@ type BasicMapper[T any] struct {
 	jetstream.KeyValue
 }
 
+var MapperPrefix = "qro-"
+
 func NewBasicMapper[T any](ctx Context, r *Repository, name string) (*BasicMapper[T], error) {
 	var err error
 
 	bm := &BasicMapper[T]{
 		Repository: r,
-		Name:       name,
+		Name:       MapperPrefix + name,
 	}
 	bm.KeyValue, err = bm.Repository.JetStream.KeyValue(ctx, bm.Name)
 	if err != nil {

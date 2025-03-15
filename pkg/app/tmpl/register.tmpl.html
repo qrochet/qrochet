@@ -8,8 +8,8 @@
 </head>
 <body>
 <div id="register">
-	{{ if .Register.Submit }}
-		<div>Test registration: {{.Register.Email}} {{.Register.Name}}</div>
+	{{ if .Register.OK }}
+		<div class="message">Registration OK {{.Register.Email}} {{.Register.Name}}</div>
 	{{ else }}
 	<form action="/register#register" method="post" enctype="multipart/form-data" target="htmz">
 	<label for="email">Email</label>
@@ -19,14 +19,23 @@
 	<input type="text" id="name" name="name" required="1" value="{{.Register.Name}}" />
 	<br/>
 	<label for="pass">Password</label>
-	<input type="text" id="pass" name="pass" required="1" />
+	<input type="password" id="pass" name="pass" required="1" />
 	<br/>
-	<label for="captcha">Two plus three is?</label>
-	<input type="number" id="captcha" name="capcha" required="1" />
+	<label for="captcha">{{.Register.CAPTCHAQ}}</label>
+	<input type="number" id="captcha" name="capcha" required="1" value="{{.Register.CAPTCHA}}"/>
+	<input type="hidden" id="captchai" value="{{.Register.CAPTCHAI}}" />
 	<br/>
-	<button type="submit" value="true" >Register</button>
+
+	<input type="hidden" id="submit" name="submit" value="true" />
+	<button type="submit" id="submitbutton" name="submitbutton" value="true">Register</button>
 	<br/>
 	</form>
+	{{ end }}
+	{{ range .Errors }}
+		<div class="error">{{.}}</div>
+	{{ end }}
+	{{ range .Messages }}
+		<div class="message">{{.}}</div>
 	{{ end }}
 </div>
 </body>
