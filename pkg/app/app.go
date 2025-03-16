@@ -101,6 +101,7 @@ func (q *Qrochet) view() *view {
 
 func (q *Qrochet) index(wr http.ResponseWriter, req *http.Request) {
 	view := q.view()
+	view.check(wr, req)
 	slog.Info("index")
 	err := q.Template.ExecuteTemplate(wr, "index.tmpl.html", view)
 	if err != nil {
@@ -115,6 +116,7 @@ func (q *Qrochet) ListenAndServe(ctx context.Context) {
 	}
 	q.ServeMux.HandleFunc("/", q.index)
 	q.ServeMux.HandleFunc("/register", q.register)
+	q.ServeMux.HandleFunc("/login", q.login)
 	q.ServeMux.Handle("/web/",
 		http.StripPrefix("/web/", http.FileServer(http.FS(q.sub))),
 	)

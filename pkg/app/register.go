@@ -40,11 +40,13 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 	}
 
 	slog.Info("register")
-	err = req.ParseMultipartForm(mpfMaxMemory)
-	if err != nil {
-		slog.Error("register req.ParseForm", "err", err)
-		v.DisplayError(wr, req, "Form error.")
-		return
+	if req.Method == "POST" {
+		err = req.ParseMultipartForm(mpfMaxMemory)
+		if err != nil {
+			slog.Error("register req.ParseForm", "err", err)
+			v.DisplayError(wr, req, "Form error.")
+			return
+		}
 	}
 	v.Register.Name = req.FormValue("name")
 	v.Register.Email = req.FormValue("email")

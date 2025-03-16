@@ -13,6 +13,7 @@ import "github.com/qrochet/qrochet/pkg/model"
 type view struct {
 	app      *Qrochet
 	Register register
+	Login    login
 
 	Messages []string // Messages to the user.
 	Errors   []string // Error messages to the user.
@@ -21,17 +22,19 @@ type view struct {
 }
 
 func (v *view) Message(form string, args ...any) {
-	s := fmt.Sprintf(form, args)
+	s := fmt.Sprintf(form, args...)
 	v.Messages = append(v.Messages, s)
 }
 
 func (v *view) Error(form string, args ...any) {
-	s := fmt.Sprintf(form, args)
+	s := fmt.Sprintf(form, args...)
 	v.Errors = append(v.Errors, s)
 }
 
+const cookieName = "QROCHET_SESSION"
+
 func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
-	cookie, err := req.Cookie("QROCHET_SESSION")
+	cookie, err := req.Cookie(cookieName)
 	if err != nil {
 		slog.Error("Error parsing cookie", "err", err)
 		// Cookie is not ok but it is the same as not being logged in.
@@ -41,11 +44,12 @@ func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
 		// Not logged in yet.
 		return nil
 	}
-	if !cookie.Secure || cookie.Expires.Before(time.Now()) {
-		slog.Error("Cookie expired or not secure", "err", err)
-		// Cookie not ok
+
+	if err = cookie.Valid(); err != nil {
+		slog.Error("Cookie not valid", "err", err)
 		return nil
 	}
+
 	tok, err := paseto.NewParser().ParseV4Local(v.app.Key, cookie.Value, []byte{})
 	if err != nil {
 		slog.Error("PASETO token not secure", "err", err)
@@ -76,7 +80,8 @@ func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-const sessionTimeout = time.Second * 60 * 60 * 24
+const sessionTimeoutSeconds = 60 * 60 * 24
+const sessionTimeout = time.Second * sessionTimeoutSeconds
 
 func (v *view) newSession(wr http.ResponseWriter, req *http.Request, user model.User) error {
 	var err error
@@ -87,9 +92,17 @@ func (v *view) newSession(wr http.ResponseWriter, req *http.Request, user model.
 	}
 
 	// Delete any existing sessions and do not care about errors.
-	v.app.Repository.Session.Delete(req.Context(), v.Session.UserID)
+	if v == nil || v.app == nil || v.app.Repository == nil || v.app.Repository.Session == nil {
+		return fmt.Errorf("newSession nil %v %v %v %v", v, v.app, v.app.Repository, v.app.Repository.Session)
+	}
 
-	session, err = v.app.Repository.Session.Put(req.Context(), v.Session.UserID, *v.Session)
+	if v.Session != nil {
+		v.app.Repository.Session.Delete(req.Context(), v.Session.UserID)
+	} else {
+		v.app.Repository.Session.Delete(req.Context(), user.ID)
+	}
+
+	session, err = v.app.Repository.Session.Put(req.Context(), user.ID, session)
 	if err != nil {
 		v.Session = nil
 		slog.Error("Cannot save session", "err", err)
@@ -107,8 +120,9 @@ func (v *view) newSession(wr http.ResponseWriter, req *http.Request, user model.
 	cookie.Secure = true
 	cookie.HttpOnly = true
 	cookie.Expires = session.End
+	cookie.MaxAge = sessionTimeoutSeconds
 	cookie.Value = encrypted
-	cookie.Name = "QROCHET_SESSION"
+	cookie.Name = cookieName
 	http.SetCookie(wr, &cookie)
 
 	return nil

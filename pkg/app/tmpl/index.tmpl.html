@@ -15,9 +15,15 @@
 <iframe hidden="hidden" name="htmz" onload="setTimeout(()=>document.querySelector(contentWindow.location.hash||null)?.replaceWith(...contentDocument.body.childNodes))"></iframe>
 <h1>Qrochet</h1>
 <h2>The web site for crochet and hand crafts.</h2>
+{{ if .Session }}
+<div>Welcome {{ .Session.UserID }}.</div>
+{{ else }}
 <div>Welcome!</div>
+<!-- Loads /login onto #login -->
+<div id="login"><a href="/login#login" target="htmz">Log In</a></div>
 <!-- Loads /register onto #register -->
 <div id="register"><a href="/register#register" target="htmz">Register</a></div>
+{{ end }}
 
 </body>
 </html>

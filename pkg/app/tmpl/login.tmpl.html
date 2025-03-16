@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="/web/qrochet.css">
+</head>
+<body>
+<div id="login">
+	{{ if .Login.OK }}
+		<div class="message">Login OK</div>
+	{{ else }}
+	<form action="/login#login" method="post" enctype="multipart/form-data" target="htmz">
+	<label for="email">Email</label>
+	<input type="email" id="email" name="email" required="1" value="{{.Register.Email}}" />
+	<br/>
+	<label for="pass">Password</label>
+	<input type="password" id="pass" name="pass" required="1" />
+	<br/>
+	<input type="hidden" id="submit" name="submit" value="true" />
+	<button type="submit" id="submitbutton" name="submitbutton" value="true">Log In</button>
+	<br/>
+	</form>
+	{{ end }}
+	{{ range .Errors }}
+		<div class="error">{{.}}</div>
+	{{ end }}
+	{{ range .Messages }}
+		<div class="message">{{.}}</div>
+	{{ end }}
+</div>
+</body>
+</html>
