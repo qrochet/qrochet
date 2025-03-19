@@ -14,6 +14,7 @@ type view struct {
 	app      *Qrochet
 	Register register
 	Login    login
+	Logout   logout
 
 	Messages []string // Messages to the user.
 	Errors   []string // Error messages to the user.

@@ -12,9 +12,18 @@ var stupidCAPTCHA = []struct {
 	q string
 	a int
 }{
-	{q: "Two plus three is?", a: 5},
-	{q: "Nine minus seven is?", a: 2},
-	{q: "Three times three?", a: 9},
+	{q: "Two plus three is?",
+		a: 5},
+	{q: "Nine minus seven is?",
+		a: 2},
+	{q: "Three times three?",
+		a: 9},
+	{q: "Six divided by two?",
+		a: 3},
+	{q: "One times one?",
+		a: 1},
+	{q: "Lucky seven?",
+		a: 7},
 }
 
 type register struct {
@@ -26,6 +35,12 @@ type register struct {
 	CAPTCHAI int
 	Submit   bool
 	OK       bool
+}
+
+func (r *register) regenerate() {
+	r.CAPTCHA = 0
+	r.CAPTCHAI = rand.IntN(len(stupidCAPTCHA))
+	r.CAPTCHAQ = stupidCAPTCHA[r.CAPTCHAI].q
 }
 
 const mpfMaxMemory = 0
@@ -52,14 +67,23 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 	v.Register.Email = req.FormValue("email")
 	v.Register.Pass = req.FormValue("pass")
 	v.Register.Submit, _ = strconv.ParseBool(req.FormValue("submit"))
-	v.Register.CAPTCHA, _ = strconv.Atoi(req.FormValue("capcha"))
-	v.Register.CAPTCHAI, _ = strconv.Atoi(req.FormValue("capchai"))
+	v.Register.CAPTCHA, _ = strconv.Atoi(req.FormValue("captcha"))
+	v.Register.CAPTCHAI, _ = strconv.Atoi(req.FormValue("captchai"))
 
 	if v.Register.Submit {
 		_, err = mail.ParseAddress(v.Register.Email)
 		if err != nil {
 			slog.Error("mail.ParseAddress", "err", err, "v.Register.Email", v.Register.Email)
+			v.Register.regenerate()
 			v.DisplayError(wr, req, "Email is not valid.")
+			return
+		}
+
+		if v.Register.CAPTCHAI < 0 || v.Register.CAPTCHAI >= len(stupidCAPTCHA) ||
+			stupidCAPTCHA[v.Register.CAPTCHAI].a != v.Register.CAPTCHA {
+			slog.Error("Register CAPTCHA not correct", "captchai", v.Register.CAPTCHAI, "captcha", v.Register.CAPTCHA)
+			v.Register.regenerate()
+			v.DisplayError(wr, req, "Question answer not correct. Please check again.")
 			return
 		}
 
@@ -72,6 +96,7 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 		existing, err := v.app.Repository.User.Get(req.Context(), user.ID)
 		if err == nil && existing.ID == user.ID {
 			slog.Error("User.Put", "err", err)
+			v.Register.regenerate()
 			v.DisplayError(wr, req, "This email address is already registered")
 			return
 		}
@@ -79,12 +104,14 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 		created, err := v.app.Repository.User.Put(req.Context(), user.ID, user)
 		if err != nil {
 			slog.Error("User.Put", "err", err)
+			v.Register.regenerate()
 			v.DisplayError(wr, req, "Registration failed")
 			return
 		}
 		err = v.newSession(wr, req, created)
 		if err != nil {
 			slog.Error("User.Put", "err", err)
+			v.Register.regenerate()
 			v.DisplayError(wr, req, "Session creation failed")
 			return
 		}
@@ -94,9 +121,7 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 		return
 	} else {
 		slog.Error("Not submitted?", "form", req.Form, "post", req.PostForm)
-		v.Register.CAPTCHA = 0
-		v.Register.CAPTCHAI = rand.IntN(len(stupidCAPTCHA))
-		v.Register.CAPTCHAQ = stupidCAPTCHA[v.Register.CAPTCHAI].q
+		v.Register.regenerate()
 		v.Display(wr, req)
 		return
 	}

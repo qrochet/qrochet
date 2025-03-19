@@ -64,6 +64,8 @@ func key() {
 }
 
 func main() {
+	envErr := env.Read()
+
 	var level = slog.LevelInfo
 	var format = env.String("SLOG_FORMAT", "text")
 	var output = env.String("SLOG_OUTPUT", "")
@@ -82,6 +84,9 @@ func main() {
 
 	setupSlog(level, format, output, "qrochet")
 	slog.Info("slog set up", "level", level, "format", format, "output", output)
+	if envErr != nil {
+		slog.Warn("could not read .env file", "err", envErr)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

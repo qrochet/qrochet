@@ -3,24 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Form</title>
+    <title>Logout Form</title>
     <link rel="stylesheet" href="/web/qrochet.css">
 </head>
 <body>
 <div id="dialog">
-	{{ if .Login.OK }}
+	{{ if .Logout.OK }}
 		<div class="message">Log In OK</div>
 		<a href="/" target="_top">Back to top</a>
 	{{ else }}
-	<form action="/login#dialog" method="post" enctype="multipart/form-data" target="htmz">
-	<label for="email">Email</label>
-	<input type="email" id="email" name="email" required="1" value="{{.Register.Email}}" />
-	<br/>
-	<label for="pass">Password</label>
-	<input type="password" id="pass" name="pass" required="1" />
-	<br/>
+	<form action="/logout#dialog" method="post" enctype="multipart/form-data" target="htmz">
 	<input type="hidden" id="submit" name="submit" value="true" />
-	<button type="submit" id="submitbutton" name="submitbutton" value="true">Log In</button>
+	<button type="submit" id="submitbutton" name="submitbutton" value="true">Log Out</button>
 	<br/>
 	</form>
 	{{ end }}

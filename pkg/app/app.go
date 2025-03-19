@@ -30,6 +30,7 @@ type Settings struct {
 
 type Qrochet struct {
 	http.Server
+	*RemoteAddrRateLimiter
 	*http.ServeMux
 	*repo.Repository
 	*template.Template
@@ -64,9 +65,10 @@ func New(ctx context.Context, s Settings) (*Qrochet, error) {
 		}
 	}
 
+	q.RemoteAddrRateLimiter = NewRemoteAddrRateLimiter(1, 4)
 	q.Server.Addr = s.Addr
 	q.ServeMux = http.NewServeMux()
-	q.Server.Handler = q.ServeMux
+	q.Server.Handler = q.RemoteAddrRateLimiter.Middleware(q.ServeMux)
 	if s.Dev {
 		q.sub = os.DirFS("pkg/app/web")
 	} else {
@@ -117,6 +119,7 @@ func (q *Qrochet) ListenAndServe(ctx context.Context) {
 	q.ServeMux.HandleFunc("/", q.index)
 	q.ServeMux.HandleFunc("/register", q.register)
 	q.ServeMux.HandleFunc("/login", q.login)
+	q.ServeMux.HandleFunc("/logout", q.logout)
 	q.ServeMux.Handle("/web/",
 		http.StripPrefix("/web/", http.FileServer(http.FS(q.sub))),
 	)
