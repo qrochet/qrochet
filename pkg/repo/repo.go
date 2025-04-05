@@ -2,6 +2,7 @@
 // and loaded from.
 package repo
 
+import "io"
 import "context"
 import "net/url"
 import "encoding/json"
@@ -21,6 +22,7 @@ type Repository struct {
 	User    *BasicMapper[model.User]
 	Session *BasicMapper[model.Session]
 	Craft   *BasicMapper[model.Craft]
+	Image   *UploadMapper
 }
 
 func Open(nurl string) (r *Repository, err error) {
@@ -75,6 +77,11 @@ func (r *Repository) Setup(ctx context.Context) error {
 		return err
 	}
 	r.Craft, err = NewBasicMapper[model.Craft](ctx, r, "craft")
+	if err != nil {
+		return err
+	}
+
+	r.Image, err = NewUploadMapper(ctx, r, "image")
 	if err != nil {
 		return err
 	}
@@ -213,6 +220,135 @@ func (b *BasicMapper[T]) All(ctx Context, keys ...string) (chan (T), error) {
 				watcher.Stop()
 				break
 			}
+		}
+		close(ch)
+	}()
+
+	return ch, nil
+}
+
+type UploadMapper struct {
+	Name string
+	*Repository
+	jetstream.ObjectStore
+}
+
+func NewUploadMapper(ctx Context, r *Repository, name string) (*UploadMapper, error) {
+	var err error
+
+	bm := &UploadMapper{
+		Repository: r,
+		Name:       MapperPrefix + name,
+	}
+	bm.ObjectStore, err = bm.Repository.JetStream.ObjectStore(ctx, bm.Name)
+	if err != nil {
+		if err == jetstream.ErrBucketNotFound {
+			kvc := jetstream.ObjectStoreConfig{Bucket: bm.Name}
+			bm.ObjectStore, err = bm.Repository.JetStream.CreateObjectStore(ctx, kvc)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+	return bm, nil
+}
+
+func infoToUpload(info *jetstream.ObjectInfo, rd io.ReadCloser) (*model.Upload, error) {
+	var up model.Upload
+
+	up.ID = model.Reference(info.Name)
+	up.Detail = info.Description
+	up.UserID = info.Metadata["user_id"]
+	up.Title = info.Metadata["title"]
+
+	up.ReadCloser = rd
+	return &up, nil
+}
+
+func entryToUpload(entry jetstream.ObjectResult) (*model.Upload, error) {
+	var up model.Upload
+	info, err := entry.Info()
+	if err != nil || info == nil {
+		entry.Close()
+		return nil, err
+	}
+
+	up.ReadCloser = entry
+	up.ID = model.Reference(info.Name)
+	up.Detail = info.Description
+	up.UserID = info.Metadata["user_id"]
+	up.Title = info.Metadata["title"]
+
+	return &up, nil
+}
+
+func (b *UploadMapper) Get(ctx Context, key string) (*model.Upload, error) {
+	entry, err := b.ObjectStore.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	return entryToUpload(entry)
+}
+
+func (b *UploadMapper) Put(ctx Context, up *model.Upload) (*model.Upload, error) {
+	var err error
+
+	info := jetstream.ObjectMeta{}
+	info.Name = string(up.ID)
+	info.Description = up.Detail
+	info.Metadata = map[string]string{
+		"user_id": up.UserID,
+		"title":   up.Title,
+	}
+
+	_, err = b.ObjectStore.Put(ctx, info, up.ReadCloser)
+	if err != nil {
+		return nil, err
+	}
+	return up, nil
+}
+
+func (b *UploadMapper) Delete(ctx Context, key string) error {
+	return b.ObjectStore.Delete(ctx, key)
+}
+
+func (b *UploadMapper) List(ctx Context, userId string) (chan (string), error) {
+	lister, err := b.ObjectStore.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan (string))
+	go func() {
+		for _, info := range lister {
+			if userId != "" && userId != info.Metadata["user_id"] {
+				continue
+			}
+			ch <- info.Name
+		}
+		close(ch)
+	}()
+
+	return ch, nil
+}
+
+func (b *UploadMapper) Watch(ctx Context) (chan (*model.Upload), error) {
+	watcher, err := b.ObjectStore.Watch(ctx,
+		jetstream.UpdatesOnly(), jetstream.IgnoreDeletes())
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan (*model.Upload))
+	go func() {
+		for info := range watcher.Updates() {
+			up, err := infoToUpload(info, nil)
+			if err != nil {
+				watcher.Stop()
+				break
+			}
+			ch <- up
 		}
 		close(ch)
 	}()

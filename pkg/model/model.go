@@ -1,6 +1,7 @@
 package model
 
 import "fmt"
+import "io"
 import "time"
 import "encoding"
 import "errors"
@@ -126,18 +127,18 @@ func (u User) LogValue() slog.Value {
 	return slog.AnyValue(u.Redact)
 }
 
-// Upload is a reference to an uploaded file.
-type Upload string
+// Reference is a reference to an Referenceed file.
+type Reference string
 
 // Craft is a craft that a user has made and is presenting on Qrochet.
 type Craft struct {
-	ID      string   `json:"id"`
-	UserID  string   `json:"user_id"`
-	Title   string   `json:"title"`
-	Detail  string   `json:"detail"`
-	Image   Upload   `json:"image"`
-	Pattern Upload   `json:"pattern"`
-	Tags    []string `json:"tags"`
+	ID      string    `json:"id"`
+	UserID  string    `json:"user_id"`
+	Title   string    `json:"title"`
+	Detail  string    `json:"detail"`
+	Image   Reference `json:"image"`
+	Pattern Reference `json:"pattern"`
+	Tags    []string  `json:"tags"`
 }
 
 // Login in a log in request
@@ -189,4 +190,14 @@ type Session struct {
 	Token  string    `json:"token"`   // Token is the security token for the session.
 	Start  time.Time `json:"start"`
 	End    time.Time `json:"end"`
+}
+
+// Upload is an uploaded file.
+type Upload struct {
+	io.ReadCloser `json:"-"`
+	ID            Reference `json:"id"`
+	Title         string    `json:"title"`
+	Detail        string    `json:"detail"`
+	UserID        string    `json:"user_id"`
+	MIME          string    `json:"mime"`
 }

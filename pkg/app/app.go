@@ -120,6 +120,8 @@ func (q *Qrochet) ListenAndServe(ctx context.Context) {
 	q.ServeMux.HandleFunc("/register", q.register)
 	q.ServeMux.HandleFunc("/login", q.login)
 	q.ServeMux.HandleFunc("/logout", q.logout)
+	q.ServeMux.HandleFunc("GET /my/craft", q.getMyCraft)
+	q.ServeMux.HandleFunc("POST /my/craft", q.postMyCraft)
 	q.ServeMux.Handle("/web/",
 		http.StripPrefix("/web/", http.FileServer(http.FS(q.sub))),
 	)

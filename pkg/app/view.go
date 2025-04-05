@@ -15,6 +15,7 @@ type view struct {
 	Register register
 	Login    login
 	Logout   logout
+	Craft    craft
 
 	Messages []string // Messages to the user.
 	Errors   []string // Error messages to the user.

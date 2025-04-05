@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="/web/qrochet.css">
+</head>
+<body>
+<div id="dialog">
+	{{ if .Craft.OK }}
+		<div class="message">Craft created OK</div>
+		<a href="/" target="_top">Back to top</a>
+	{{ else }}
+	<form action="/my/craft#dialog" method="post" enctype="multipart/form-data" target="htmz">
+	<label for="name">Title</label>
+	<input type="input" id="name" name="name" required="1" value="{{.Craft.Name}}" />
+	<br/>
+	<label for="pass">Description</label>
+	<textarea id="description" name="description" required="1">{{.Craft.Description}}</textarea>
+	<br/>
+	<label for="image">Image (up to 4MB)</label>
+	<input type="file" id="image" name="image" value="true" accept="image/png, image/jpeg, image/gif" />
+	<br/>
+	<input type="hidden" id="submit" name="submit" value="true" />
+	<button type="submit" id="submitbutton" name="submitbutton" value="true">New Craft</button>
+	</form>
+	{{ end }}
+	{{ range .Errors }}
+		<div class="error">{{.}}</div>
+	{{ end }}
+	{{ range .Messages }}
+		<div class="message">{{.}}</div>
+	{{ end }}
+</div>
+</body>
+</html>
