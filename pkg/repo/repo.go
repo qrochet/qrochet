@@ -6,6 +6,7 @@ import "io"
 import "context"
 import "net/url"
 import "encoding/json"
+import "log/slog"
 
 import nsrv "github.com/nats-io/nats-server/v2/server"
 import nats "github.com/nats-io/nats.go"
@@ -21,7 +22,7 @@ type Repository struct {
 	jetstream.JetStream
 	User    *BasicMapper[model.User]
 	Session *BasicMapper[model.Session]
-	Craft   *BasicMapper[model.Craft]
+	Craft   *CraftMapper
 	Image   *UploadMapper
 }
 
@@ -76,7 +77,7 @@ func (r *Repository) Setup(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	r.Craft, err = NewBasicMapper[model.Craft](ctx, r, "craft")
+	r.Craft, err = NewCraftMapper(ctx, r, "craft")
 	if err != nil {
 		return err
 	}
@@ -194,6 +195,7 @@ func (b *BasicMapper[T]) Watch(ctx Context, keys ...string) (chan (T), error) {
 				watcher.Stop()
 				break
 			}
+			ch <- obj
 		}
 		close(ch)
 	}()
@@ -204,12 +206,17 @@ func (b *BasicMapper[T]) Watch(ctx Context, keys ...string) (chan (T), error) {
 func (b *BasicMapper[T]) All(ctx Context, keys ...string) (chan (T), error) {
 	watcher, err := b.KeyValue.WatchFiltered(ctx, keys, jetstream.IgnoreDeletes())
 	if err != nil {
+		slog.Error("BasicMapper.All", "err", err)
 		return nil, err
 	}
+	slog.Debug("BasicMapper.All", "keys", keys)
 
 	ch := make(chan (T))
 	go func() {
 		for res := range watcher.Updates() {
+
+			slog.Debug("BasicMapper.All Updates", "res", res)
+
 			var obj T
 			if res == nil {
 				watcher.Stop()
@@ -220,7 +227,9 @@ func (b *BasicMapper[T]) All(ctx Context, keys ...string) (chan (T), error) {
 				watcher.Stop()
 				break
 			}
+			ch <- obj
 		}
+		slog.Debug("BasicMapper.All closed")
 		close(ch)
 	}()
 
@@ -354,4 +363,35 @@ func (b *UploadMapper) Watch(ctx Context) (chan (*model.Upload), error) {
 	}()
 
 	return ch, nil
+}
+
+// CraftMapper is a mapper for cafts.
+type CraftMapper struct {
+	// Inherit from BasicMapper
+	*BasicMapper[model.Craft]
+}
+
+func NewCraftMapper(ctx Context, r *Repository, name string) (*CraftMapper, error) {
+	var err error
+	res := &CraftMapper{}
+	res.BasicMapper, err = NewBasicMapper[model.Craft](ctx, r, name)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (c *CraftMapper) Put(ctx Context, key string, craft model.Craft) (model.Craft, error) {
+	key = craft.UserID + "." + key
+	return c.BasicMapper.Put(ctx, key, craft)
+}
+
+func (c *CraftMapper) GetForUserID(ctx Context, key string, UserID string) (model.Craft, error) {
+	key = UserID + "." + key
+	return c.BasicMapper.Get(ctx, key)
+}
+
+func (c *CraftMapper) AllForUserID(ctx Context, UserID string) (chan model.Craft, error) {
+	key := UserID + ".>"
+	return c.BasicMapper.All(ctx, key)
 }

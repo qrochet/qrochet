@@ -4,14 +4,8 @@ import "net/http"
 import "strconv"
 import "log/slog"
 import "io"
-import "image"
-import "image/jpeg"
-import _ "image/png"
-import _ "image/gif"
 import "mime/multipart"
-import "bytes"
 
-import "golang.org/x/image/draw"
 import "github.com/oklog/ulid/v2"
 import "github.com/qrochet/qrochet/pkg/model"
 
@@ -23,30 +17,21 @@ type craft struct {
 	Image       multipart.File
 	Header      *multipart.FileHeader
 	OK          bool
+	All         chan model.Craft
 }
-
-func resizeImageJPEG(input io.Reader, width, height, quality int) (*bytes.Buffer, error) {
-	output := &bytes.Buffer{}
-
-	src, _, err := image.Decode(input)
-
-	if err != nil {
-		return nil, err
-	}
-
-	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.NearestNeighbor.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
-
-	jpeg.Encode(output, dst, &jpeg.Options{Quality: quality})
-	return output, err
-}
-
-const maxImageSize = 4000 * 1000 * 1000
 
 func (q *Qrochet) getMyCraft(wr http.ResponseWriter, req *http.Request) {
+	var err error
 	v := q.view()
 	if !v.IsLoggedIn(wr, req) {
 		v.DisplayError(wr, req, "Please log in.")
+		return
+	}
+
+	v.Craft.All, err = q.Repository.Craft.AllForUserID(req.Context(), v.Session.UserID)
+	if !v.IsLoggedIn(wr, req) {
+		slog.Error("getMyCraft", "err", err)
+		v.DisplayError(wr, req, "No crafts.")
 		return
 	}
 
@@ -119,6 +104,7 @@ func (q *Qrochet) postMyCraft(wr http.ResponseWriter, req *http.Request) {
 		craft.Title = v.Craft.Name
 		craft.Detail = v.Craft.Description
 		craft.Image = upload.ID
+		craft.UserID = v.Session.UserID
 
 		created, err := v.app.Repository.Craft.Put(ctx, craft.ID, *craft)
 		if err != nil {
