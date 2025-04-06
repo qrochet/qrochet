@@ -8,6 +8,7 @@ import "mime/multipart"
 
 import "github.com/oklog/ulid/v2"
 import "github.com/qrochet/qrochet/pkg/model"
+import "github.com/qrochet/qrochet/pkg/censor"
 
 type craft struct {
 	ID          string
@@ -61,8 +62,8 @@ func (q *Qrochet) postMyCraft(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	v.Craft.Name = req.FormValue("name")
-	v.Craft.Description = req.FormValue("description")
+	v.Craft.Name = censor.Replace(req.FormValue("name"))
+	v.Craft.Description = censor.Replace(req.FormValue("description"))
 	v.Craft.Submit, _ = strconv.ParseBool(req.FormValue("submit"))
 	v.Craft.Image, v.Craft.Header, err = req.FormFile("image")
 	if err != nil {
