@@ -4,13 +4,15 @@ import "net/http"
 import "log/slog"
 import "io"
 import "image"
-import "image/draw"
+import "image/color"
 import "image/jpeg"
 import _ "image/png"
 import _ "image/gif"
 
 // import "mime/multipart"
 import "bytes"
+
+import "golang.org/x/image/draw"
 
 func resizeImageJPEG(input io.Reader, width, height, quality int) (*bytes.Buffer, error) {
 	output := &bytes.Buffer{}
@@ -22,7 +24,11 @@ func resizeImageJPEG(input io.Reader, width, height, quality int) (*bytes.Buffer
 	}
 
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.Draw(dst, dst.Rect, src, src.Bounds().Min, draw.Over)
+	// Fill image with transparent white first
+	tw := color.RGBA{255, 255, 255, 0}
+	draw.Draw(dst, dst.Bounds(), &image.Uniform{tw}, image.ZP, draw.Src)
+	// Then draw image
+	draw.NearestNeighbor.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Over, nil)
 
 	err = jpeg.Encode(output, dst, &jpeg.Options{Quality: quality})
 	return output, err
