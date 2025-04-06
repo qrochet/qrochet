@@ -9,7 +9,7 @@
 <body>
 {{define "craft_display"}}
 <div class="craft">
-	<h2>{{.Title}}<h2>
+	<h2>{{.Title}}</h2>
 	<img src="/upload/{{.Image}}" width="240" height="240"/><br>
 	<p>{{.Detail}}<p>
 </div>
@@ -28,7 +28,12 @@
 	<textarea id="description" name="description" required="1">{{.Craft.Description}}</textarea>
 	<br/>
 	<label for="image">Image (up to 4MB)</label>
-	<input type="file" id="image" name="image" value="true" accept="image/png, image/jpeg, image/gif" />
+	<input type="file" id="image" name="image" value="true"
+		accept="image/png, image/jpeg, image/gif"
+		oninput="preview.src=window.URL.createObjectURL(this.files[0]);preview.height=64;preview.width=64;"
+	/>
+	<br/>
+	<img id="preview"/>
 	<br/>
 	<input type="hidden" id="submit" name="submit" value="true" />
 	<button type="submit" id="submitbutton" name="submitbutton" value="true">New Craft</button>

@@ -137,3 +137,13 @@ div.message {
   	outline-offset: -10px;
 }
 
+#preview {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid gray;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
