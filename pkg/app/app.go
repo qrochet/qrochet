@@ -5,6 +5,7 @@ import "net/http"
 import "net"
 import "os"
 import "io/fs"
+import "io"
 import "log/slog"
 import "context"
 import "embed"
@@ -20,6 +21,11 @@ var resources embed.FS
 
 //go:embed tmpl
 var templates embed.FS
+
+type Template interface {
+	Execute(wr io.Writer, data any) error
+	ExecuteTemplate(wr io.Writer, name string, data any) error
+}
 
 type Settings struct {
 	NATS string
@@ -121,6 +127,7 @@ func (q *Qrochet) ListenAndServe(ctx context.Context) {
 	q.ServeMux.HandleFunc("/login", q.login)
 	q.ServeMux.HandleFunc("/logout", q.logout)
 	q.ServeMux.HandleFunc("GET /my/craft", q.getMyCraft)
+	q.ServeMux.HandleFunc("GET /my/crafts", q.getMyCrafts)
 	q.ServeMux.HandleFunc("POST /my/craft", q.postMyCraft)
 	q.ServeMux.HandleFunc("GET /upload/{id}", q.getUpload)
 	q.ServeMux.Handle("/web/",

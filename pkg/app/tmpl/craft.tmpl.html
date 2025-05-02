@@ -30,11 +30,14 @@
 	<label for="image">Image (up to 4MB)</label>
 	<input type="file" id="image" name="image" value="true"
 		accept="image/png, image/jpeg, image/gif"
-		oninput="preview.src=window.URL.createObjectURL(this.files[0]);preview.height=64;preview.width=64;"
+		oninput="preview.src=window.URL.createObjectURL(this.files[0])"
 	/>
 	<br/>
 	<img id="preview"/>
 	<br/>
+	<label for="agree">I agree with the <a href="/web/terms.html">terms and conditions</a>for the use of this web site.</label>
+    <input type="checkbox" id="agree" name="agree" required="1" value="true" />
+
 	<input type="hidden" id="submit" name="submit" value="true" />
 	<button type="submit" id="submitbutton" name="submitbutton" value="true">New Craft</button>
 	</form>
@@ -45,7 +48,7 @@
 	{{ range .Messages }}
 		<div class="message">{{.}}</div>
 	{{ end }}
-		<h1>Crafts</h1>
+		<h1>My Crafts</h1>
 	{{ range .Craft.All }}
 		<p>Craft</p>
 		{{template "craft_display" .}}

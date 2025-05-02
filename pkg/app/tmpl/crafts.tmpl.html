@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craft Form</title>
+    <link rel="stylesheet" href="/web/qrochet.css">
+</head>
+<body>
+{{define "craft_display"}}
+<div class="craft">
+	<h2>{{.Title}}</h2>
+	<img src="/upload/{{.Image}}" width="240" height="240"/><br>
+	<p>{{.Detail}}<p>
+</div>
+{{end}}
+
+<div id="dialog">
+	{{ range .Errors }}
+		<div class="error">{{.}}</div>
+	{{ end }}
+	{{ range .Messages }}
+		<div class="message">{{.}}</div>
+	{{ end }}
+		<h1>My Crafts</h1>
+	{{ range .Craft.All }}
+		<p>Craft</p>
+		{{template "craft_display" .}}
+	{{ end }}
+</div>
+</body>
+</html>

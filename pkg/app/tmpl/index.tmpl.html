@@ -13,14 +13,16 @@
 <body>
 <!-- Install HTMLZ, the smallest Javascript framework ever. -->
 <iframe hidden="hidden" name="htmz" onload="setTimeout(()=>document.querySelector(contentWindow.location.hash||null)?.replaceWith(...contentDocument.body.childNodes))"></iframe>
+<img id="logo" src="/web/cute-logo.png" heigth="128" width="640">
 <h1>Qrochet</h1>
 <h2>The web site for crochet and hand crafts.</h2>
 {{ if .Session }}
-<div id="dialog">Welcome {{ .Session.UserID }}.</div>
+<div id="dialog">Welcome {{ .User.Name }}.</div>
 <!-- Loads /logout onto #dialog -->
 <div id="logout"><a href="/logout#dialog" target="htmz">Log Out</a></div>
 <!-- Loads /my/craft onto #dialog -->
 <div id="my_craft"><a href="/my/craft#dialog" target="htmz">New Craft</a></div>
+<div id="my_crafts"><a href="/my/crafts#dialog" target="htmz">My Crafts</a></div>
 {{ else }}
 <div id="dialog">Welcome!</div>
 <!-- Loads /login onto #dialog -->
@@ -28,5 +30,6 @@
 <!-- Loads /register onto #dialog -->
 <div id="register"><a href="/register#dialog" target="htmz">Register</a></div>
 {{ end }}
+<div id="terms"><a href="/web/terms.html#dialog">Terms and Conditions</a></div>
 </body>
 </html>

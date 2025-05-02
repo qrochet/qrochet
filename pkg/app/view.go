@@ -21,6 +21,7 @@ type view struct {
 	Errors   []string // Error messages to the user.
 
 	Session *model.Session
+	User    *model.User
 }
 
 func (v *view) Message(form string, args ...any) {
@@ -78,6 +79,14 @@ func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
 		return nil
 	}
 
+	user, err := v.app.Repository.User.Get(req.Context(), session.UserID)
+	if err != nil {
+		slog.Error("User.Get", "err", err)
+		v.DisplayError(wr, req, "Cannot get user for session.")
+		return err
+	}
+	v.User = &user
+
 	v.Session = &session
 	return nil
 }
@@ -126,6 +135,8 @@ func (v *view) newSession(wr http.ResponseWriter, req *http.Request, user model.
 	cookie.Value = encrypted
 	cookie.Name = cookieName
 	http.SetCookie(wr, &cookie)
+
+	v.User = &user
 
 	return nil
 }

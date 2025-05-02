@@ -29,3 +29,6 @@ qrochet
 web/app.wasm
 build/qrochet
 build/make
+
+# art sources
+art/*.xcf

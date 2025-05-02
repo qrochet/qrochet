@@ -30,7 +30,7 @@ func (q *Qrochet) getMyCraft(wr http.ResponseWriter, req *http.Request) {
 	}
 
 	v.Craft.All, err = q.Repository.Craft.AllForUserID(req.Context(), v.Session.UserID)
-	if !v.IsLoggedIn(wr, req) {
+	if err != nil {
 		slog.Error("getMyCraft", "err", err)
 		v.DisplayError(wr, req, "No crafts.")
 		return
@@ -122,4 +122,23 @@ func (q *Qrochet) postMyCraft(wr http.ResponseWriter, req *http.Request) {
 		v.Display(wr, req)
 		return
 	}
+}
+
+func (q *Qrochet) getMyCrafts(wr http.ResponseWriter, req *http.Request) {
+	var err error
+	v := q.view()
+	if !v.IsLoggedIn(wr, req) {
+		v.DisplayError(wr, req, "Please log in.")
+		return
+	}
+
+	v.Craft.All, err = q.Repository.Craft.AllForUserID(req.Context(), v.Session.UserID)
+	if err != nil {
+		slog.Error("getMyCrafts", "err", err)
+		v.DisplayError(wr, req, "No crafts.")
+		return
+	}
+
+	v.Display(wr, req)
+	return
 }
