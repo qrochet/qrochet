@@ -86,8 +86,8 @@ type User struct {
 	ID       string   `json:"id"`
 	Email    string   `json:"email"`
 	Name     string   `json:"name"`
-	Role     Role     `json:"role`
-	Theme    Theme    `json:"theme`
+	Role     Role     `json:"role"`
+	Theme    Theme    `json:"theme"`
 	CraftIDs []string `json:"craft_ids"`
 	Hash     string   `json:"hash"` // password hash
 }

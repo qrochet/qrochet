@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qrochet, the web site for crochet and hand crafts.</title>
+	<!-- Install fonts from Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Darumadrop+One&family=Jua&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/web/qrochet.css">
+</head>
+<body>
+<img id="logo" src="/web/cute-logo.png" heigth="128" width="640">
+<h1>Qrochet Formatting</h1>
+<h2>Introduction</h2>
+
+<p>
+Descriptions or comments for Qrochet, may a use special text
+format, which will be shown as a formatted document.
+</p>
+
+<p>
+The format is similar to Markdown, but is simplified. It is the same
+formats as is used by the <a htef="https://tip.golang.org/doc/comment">
+Go programming language for documentation</a>. This description
+is based on the linked document.
+</p>
+
+<p>
+Qrochet descriptions are written in a simple text format that supports
+paragraphs, headings, links, lists, and preformatted blocks.
+To keep comments lightweight and readable,
+there is no support for complex features like font changes or raw HTML.
+</p>
+
+<p>Table of Contents:</p>
+<ul>
+<li><a href="#paragraphs">Paragraphs</a></li>
+<li><a href="#headings">Headings</a></li>
+<li><a href="#links">Links</a></li>
+<li><a href="#lists">Lists</a></li>
+</ul>
+
+<h2 id="paragraphs">Paragraphs</h3>
+<p>A paragraph is a span of unindented non-blank lines.</p>
+<p>A pair of consecutive backticks (` U+0060)
+is interpreted as a Unicode left quote (“ U+201C),
+and a pair of consecutive single quotes (' U+0027)
+is interpreted as a Unicode right quote (” U+201D).</p>
+<h2 id="headings">Headings</h3>
+<p>A heading is a line beginning with a number sign (# U+0023) and then a space and the heading text.
+To be recognized as a heading, the line must be unindented and set off from adjacent paragraph text
+by blank lines.</p>
+<p>For example:</p>
+<pre><code>
+# This is a heading
+
+This is a paragraph.
+It has two lines.
+...
+</code></pre>
+
+<p>On the other hand:</p>
+<pre><code>// #This is not a heading, because there is no space.
+//
+// # This is not a heading,
+// # because it is multiple lines.
+//
+// # This is not a heading,
+// because it is also multiple lines.
+//
+// The next paragraph is not a heading, because there is no additional text:
+//
+// #
+//
+// In the middle of a span of non-blank lines,
+// # this is not a heading either.
+//
+//     # This is not a heading, because it is indented.
+</code></pre>
+<h2 id="links">Links</h3>
+<p>A span of unindented non-blank lines defines link targets
+when every line is of the form “[Text]: URL”.
+In other text in the same doc comment,
+“[Text]” represents a link to URL using the given text—in HTML,
+&lt;a href=&ldquo;URL&rdquo;&gt;Text&lt;/a&gt;.
+For example:</p>
+<pre><code>
+This is a link to [YouTube] inside a paragraph.
+
+And this is a link to [Google].
+
+[YouTube]: https://youtube.com
+[Google]: https://google.com
+</code></pre>
+<p>By keeping URLs in a separate section,
+this format only minimally interrupts the flow of the actual text.
+It also roughly matches the Markdown
+<a href="https://spec.commonmark.org/0.30/#shortcut-reference-link" rel="noreferrer" target="_blank">shortcut reference link format</a>,
+without the optional title text.</p>
+<p>If there is no corresponding URL declaration,
+then (except for doc links, described in the next section)
+“[Text]” is not a hyperlink, and the square brackets are preserved
+when displayed.
+Each doc comment is considered independently:
+link target definitions in one comment do not affect other comments.</p>
+<p>Plain text that is recognized as a URL is automatically linked in HTML renderings.</p>
+<h3 id="lists">Lists</h3>
+<p>A list is a span of indented or blank lines
+(which would otherwise be a block, as described in the next section)
+in which the first indented line begins with
+a bullet list marker or a numbered list marker.</p>
+<p>A bullet list marker is a star, plus, dash, or Unicode bullet
+(*, +, -, •; U+002A, U+002B, U+002D, U+2022)
+followed by a space or tab and then text.
+In a bullet list, each line beginning with a bullet list
+marker starts a new list item.</p>
+<p>For example:</p>
+<pre><code>
+This is a paragraph followed by an unordered list:
+
+   - This is the first list item.
+   - This is the second list item.
+   - This is the third list item.
+
+</code></pre>
+<p>A numbered list marker is a decimal number of any length
+followed by a period or right parenthesis, then a space or tab, and then text.
+In a numbered list, each line beginning with a number list marker starts a new list item.
+Item numbers are left as is, never renumbered.</p>
+<p>For example:</p>
+<pre><code>
+This is a paragraph followed by an ordered list:
+
+   1. This is the first list item.
+   2. This is the second list item.
+   3. This is the third list item.
+</code></pre>
+<p>List items only contain paragraphs, not code blocks or nested lists.
+This avoids any space-counting subtlety as well as questions about
+how many spaces a tab counts for in inconsistent indentation.</p>
+<p>Rewriting the text to avoid nested lists usually
+improves the documentation and is the best solution.
+Another potential workaround is to mix list markers,
+since bullet markers do not introduce list items in a numbered list,
+nor vice versa.
+For example:</p>
+<pre><code>
+Here is a list:
+
+  1. Item 1.
+
+     - Subitem 1.
+
+     - Subitem 2.
+
+  2. Item 2.
+
+  3. Item 3.
+</code></pre>
+<h3 id="block">Blocks</h3>
+<p>A block is a span of indented or blank lines
+not starting with a bullet list marker or numbered list marker.
+It is rendered as preformatted text (a &lt;pre&gt; block in HTML).</p>
+<p>Blocks contain preformatted text. For example:</p>
+<pre><code>
+    This is a block.
+    It will keep its formatting and new lines.
+</code></pre>
+
+</body>
+</html>

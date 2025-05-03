@@ -11,7 +11,7 @@
 <div class="craft">
 	<h2>{{.Title}}</h2>
 	<img src="/upload/{{.Image}}" width="240" height="240"/><br>
-	<p>{{.Detail}}<p>
+	<p>{{.Detail | doc}}<p>
 </div>
 {{end}}
 

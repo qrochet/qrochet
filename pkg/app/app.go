@@ -13,8 +13,13 @@ import "html/template"
 import "aidanwoods.dev/go-paseto"
 
 import (
+	"github.com/qrochet/qrochet/pkg/doc"
 	"github.com/qrochet/qrochet/pkg/repo"
 )
+
+var templateFuncs = template.FuncMap{
+	"doc": doc.HTML,
+}
 
 //go:embed web
 var resources embed.FS
@@ -57,7 +62,7 @@ func New(ctx context.Context, s Settings) (*Qrochet, error) {
 		}
 	}
 
-	q.Template = template.New("")
+	q.Template = template.New("").Funcs(templateFuncs)
 
 	if s.Dev {
 		q.Template, err = q.Template.ParseGlob("pkg/app/tmpl/*.tmpl.html")

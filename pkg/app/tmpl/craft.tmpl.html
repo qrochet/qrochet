@@ -11,7 +11,7 @@
 <div class="craft">
 	<h2>{{.Title}}</h2>
 	<img src="/upload/{{.Image}}" width="240" height="240"/><br>
-	<p>{{.Detail}}<p>
+	<p>{{.Detail | doc}}<p>
 </div>
 {{end}}
 
@@ -21,10 +21,10 @@
 		<a href="/" target="_top">Back to top</a>
 	{{ else }}
 	<form action="/my/craft#dialog" method="post" enctype="multipart/form-data" target="htmz">
-	<label for="name">Title</label>
+	<label for="name">Title.</label>
 	<input type="input" id="name" name="name" required="1" value="{{.Craft.Name}}" />
 	<br/>
-	<label for="pass">Description</label>
+	<label for="pass">Description. Please use the <a href="/web/doc.html" target="_blank" rel="noopener noreferrer">doc format</a>.</label>
 	<textarea id="description" name="description" required="1">{{.Craft.Description}}</textarea>
 	<br/>
 	<label for="image">Image (up to 4MB)</label>
@@ -35,7 +35,7 @@
 	<br/>
 	<img id="preview"/>
 	<br/>
-	<label for="agree">I agree with the <a href="/web/terms.html">terms and conditions</a>for the use of this web site.</label>
+	<label for="agree">I agree with the <a href="/web/terms.html">terms and conditions</a> for the use of this web site.</label>
     <input type="checkbox" id="agree" name="agree" required="1" value="true" />
 
 	<input type="hidden" id="submit" name="submit" value="true" />
