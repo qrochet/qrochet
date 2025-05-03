@@ -14,6 +14,7 @@ import "aidanwoods.dev/go-paseto"
 
 import "github.com/qrochet/qrochet/pkg/app"
 import "github.com/qrochet/qrochet/pkg/env"
+import "github.com/qrochet/qrochet/pkg/mail"
 
 func setupSlog(level slog.Level, format, output, tag string) {
 	// Determine the log format
@@ -69,6 +70,9 @@ func main() {
 	var level = slog.LevelInfo
 	var format = env.String("SLOG_FORMAT", "text")
 	var output = env.String("SLOG_OUTPUT", "")
+	var SMTPServer = env.String("SMTP_SERVER", "")
+	var SMTPUser = env.String("SMTP_USER", "")
+	var SMTPPass = env.String("SMTP_PASS", "")
 
 	var set app.Settings
 	flag.StringVar(&set.NATS, "n", env.String("QROCHET_NATS"), "QROCHET_NATS\tnats server to connect to, or nats+builtin:///path for a built in NATS server.")
@@ -76,6 +80,9 @@ func main() {
 	flag.StringVar(&set.Key, "k", env.String("QROCHET_PASETO"), "QROCHET_PASETO\tPASETO private key")
 	flag.BoolVar(&set.Dev, "D", env.Bool("QROCHET_DEV"), "QROCHET_DEV\tset to true to enable dev mode and use local resources.")
 	flag.TextVar(&level, "L", slog.LevelInfo, "log level to use")
+	flag.StringVar(&SMTPServer, "M", SMTPServer, "SMTP_SERVER\tmail server to connect to, or empty to disable mailing.")
+	flag.StringVar(&SMTPUser, "U", SMTPUser, "SMTP_USER\tmail server user name")
+	flag.StringVar(&SMTPPass, "P", SMTPPass, "SMTP_PASS\tmail server password")
 	flag.Parse()
 
 	if len(flag.Args()) > 0 && flag.Args()[0] == "key" {
@@ -95,6 +102,15 @@ func main() {
 	if err != nil {
 		slog.Error("app.New", "err", err)
 		os.Exit(2)
+	}
+
+	if SMTPServer != "" {
+		msrv := mail.NewServer(SMTPServer, SMTPUser, SMTPPass)
+		if err != nil {
+			slog.Error("mail.NewServer", "err", err)
+			os.Exit(3)
+		}
+		q.SetMailSender(msrv)
 	}
 
 	defer q.Close()

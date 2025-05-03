@@ -7,6 +7,7 @@ import "log/slog"
 import "math/rand/v2"
 
 import "github.com/qrochet/qrochet/pkg/model"
+import mailer "github.com/qrochet/qrochet/pkg/mail"
 
 var stupidCAPTCHA = []struct {
 	q string
@@ -24,6 +25,12 @@ var stupidCAPTCHA = []struct {
 		a: 1},
 	{q: "Lucky seven?",
 		a: 7},
+	{q: "Two pairs?",
+		a: 4},
+	{q: "Next number after five?",
+		a: 6},
+	{q: "Two times two times two?",
+		a: 8},
 }
 
 type register struct {
@@ -44,6 +51,28 @@ func (r *register) regenerate() {
 }
 
 const mpfMaxMemory = 0
+
+func (q *Qrochet) sendRegistrationMail(user model.User) error {
+	if q.msrv == nil {
+		slog.Warn("Mailer not available will not send registration email.")
+		return nil
+	}
+
+	msg := mailer.Mail{}
+	msg.To = user.Name + "<" + user.Email + ">"
+
+	msg.Printf("Dear %s, welcome to Qrochet\n\n", user.Name)
+	msg.Println("Thank you for registering with Qrochet, the website for chroochet and hand crafts.")
+	msg.Println("This is a message to confirm your registration. You do not have to reply to it.")
+	msg.Println("Kind regards, Qrochet.")
+
+	err := q.msrv.Send(msg)
+	if err != nil {
+		slog.Error("While sending mail", "err", err)
+		return err
+	}
+	return nil
+}
 
 func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 	var err error
@@ -115,6 +144,8 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 			v.DisplayError(wr, req, "Session creation failed")
 			return
 		}
+		go q.sendRegistrationMail(created)
+
 		v.Message("Registration OK")
 		v.Register.OK = true
 		v.Display(wr, req)
