@@ -8,6 +8,7 @@ import "math/rand/v2"
 
 import "github.com/qrochet/qrochet/pkg/model"
 import mailer "github.com/qrochet/qrochet/pkg/mail"
+import "github.com/oklog/ulid/v2"
 
 var stupidCAPTCHA = []struct {
 	q string
@@ -117,14 +118,21 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 		}
 
 		user := model.User{}
-		user.ID = model.Key(v.Register.Email)
+		user.ID = ulid.Make().String()
 		user.Email = v.Register.Email
 		user.Name = v.Register.Name
 		user.SetPassword(v.Register.Pass)
 
-		existing, err := v.app.Repository.User.Get(req.Context(), user.ID)
-		if err == nil && existing.ID == user.ID {
-			slog.Error("User.Put", "err", err)
+		existing, err := v.app.Repository.User.GetByEmail(req.Context(), user.Email)
+		if err != nil {
+			slog.Error("User.GetByEmail", "err", err)
+			v.Register.regenerate()
+			v.DisplayError(wr, req, "Error getting user by email address")
+			return
+		}
+
+		if existing != nil && existing.Email == user.Email {
+			slog.Error("User.GetByEmail", "err", err)
 			v.Register.regenerate()
 			v.DisplayError(wr, req, "This email address is already registered")
 			return

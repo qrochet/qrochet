@@ -20,7 +20,7 @@ type Repository struct {
 	*nsrv.Server
 	*nats.Conn
 	jetstream.JetStream
-	User    *BasicMapper[model.User]
+	User    *UserMapper
 	Session *BasicMapper[model.Session]
 	Craft   *CraftMapper
 	Image   *UploadMapper
@@ -69,7 +69,7 @@ func Open(nurl string) (r *Repository, err error) {
 
 func (r *Repository) Setup(ctx context.Context) error {
 	var err error
-	r.User, err = NewBasicMapper[model.User](ctx, r, "user")
+	r.User, err = NewUserMapper(ctx, r, "user")
 	if err != nil {
 		return err
 	}
@@ -236,6 +236,36 @@ func (b *BasicMapper[T]) All(ctx Context, keys ...string) (chan (T), error) {
 	return ch, nil
 }
 
+// Watches the mapper and returns the first value where the matcher returns true.
+// Return nil if not found, or an error on error.
+// As this is a simple linear scan it isn't very performant yet, but it will do as
+// a first implementation.
+func (b *BasicMapper[T]) GetFirstMatch(ctx Context, matcher func(t *T) bool) (*T, error) {
+	watcher, err := b.KeyValue.WatchAll(ctx, jetstream.IgnoreDeletes())
+	if err != nil {
+		return nil, err
+	}
+	defer watcher.Stop()
+
+	for res := range watcher.Updates() {
+		var obj T
+		if res == nil {
+			return nil, nil
+		}
+
+		err = json.Unmarshal(res.Value(), &obj)
+		if err != nil {
+			return nil, err
+		}
+
+		if matcher(&obj) {
+			return &obj, nil
+		}
+	}
+
+	return nil, nil
+}
+
 type UploadMapper struct {
 	Name string
 	*Repository
@@ -394,4 +424,24 @@ func (c *CraftMapper) GetForUserID(ctx Context, key string, UserID string) (mode
 func (c *CraftMapper) AllForUserID(ctx Context, UserID string) (chan model.Craft, error) {
 	key := UserID + ".>"
 	return c.BasicMapper.All(ctx, key)
+}
+
+// UserMapper is a mapper for cafts.
+type UserMapper struct {
+	// Inherit from BasicMapper
+	*BasicMapper[model.User]
+}
+
+func NewUserMapper(ctx Context, r *Repository, name string) (*UserMapper, error) {
+	var err error
+	res := &UserMapper{}
+	res.BasicMapper, err = NewBasicMapper[model.User](ctx, r, name)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (c *UserMapper) GetByEmail(ctx Context, email string) (*model.User, error) {
+	return c.BasicMapper.GetFirstMatch(ctx, func(u *model.User) bool { return u.Email == email })
 }

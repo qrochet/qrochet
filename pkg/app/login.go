@@ -5,8 +5,6 @@ import "net/mail"
 import "strconv"
 import "log/slog"
 
-import "github.com/qrochet/qrochet/pkg/model"
-
 type login struct {
 	Email  string
 	Pass   string
@@ -44,23 +42,21 @@ func (q *Qrochet) login(wr http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		id := model.Key(v.Login.Email)
-
-		existing, err := v.app.Repository.User.Get(req.Context(), id)
-		if err != nil || existing.ID != id {
-			slog.Error("User.Get", "err", err)
+		existing, err := v.app.Repository.User.GetByEmail(req.Context(), v.Login.Email)
+		if err != nil || existing == nil || existing.Email != v.Login.Email {
+			slog.Error("User.GetForEmail", "err", err)
 			v.DisplayError(wr, req, "This email address is not registered yet or the password is not correct")
 			return
 		}
 
 		err = existing.CheckPassword(v.Login.Pass)
-		if err != nil || existing.ID != id {
+		if err != nil {
 			slog.Error("User.CheckPassword", "err", err)
 			v.DisplayError(wr, req, "This email address is not registered yet or the password is not correct")
 			return
 		}
 
-		err = v.newSession(wr, req, existing)
+		err = v.newSession(wr, req, *existing)
 		if err != nil {
 			slog.Error("User.Put", "err", err)
 			v.DisplayError(wr, req, "Session creation failed")

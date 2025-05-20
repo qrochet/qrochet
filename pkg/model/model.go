@@ -94,14 +94,16 @@ type User struct {
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
 
-// Key is the base32 encoded ID, for use with NATS k/V.
-func Key(id string) string {
-	return b32.EncodeToString([]byte(id))
+// IDToKey converts the ID to a base32 encoded key.
+// For use with NATS K/V in cases where the key isn't suitable for NATS.
+func IDToKey(id []byte) string {
+	return b32.EncodeToString(id)
 }
 
-// Key is the base32 encoded ID, for use with NATS k/V.
-func (u User) Key() string {
-	return Key(u.ID)
+// KeyToID converts the key base32 back to an ID.
+// For use with NATS K/V in cases where the key isn't suitable for NATS.
+func KeyToID(key string) ([]byte, error) {
+	return b32.DecodeString(key)
 }
 
 func (u User) CheckPassword(pass string) error {
