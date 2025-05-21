@@ -64,14 +64,14 @@ func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
 		slog.Error("PASETO token subject", "err", err)
 		return err
 	}
-	session, err := v.app.Repository.Session.Get(req.Context(), sub)
+	session, err := v.app.Repository.Session().Get(req.Context(), sub)
 	if err != nil {
 		slog.Error("Session expired", "err", err)
 		return err
 	}
 
 	if session.End.Before(time.Now()) {
-		err = v.app.Repository.Session.Delete(req.Context(), sub)
+		err = v.app.Repository.Session().Delete(req.Context(), sub)
 		if err != nil {
 			slog.Error("Could not delete expired session", "err", err)
 		}
@@ -79,7 +79,7 @@ func (v *view) check(wr http.ResponseWriter, req *http.Request) error {
 		return nil
 	}
 
-	user, err := v.app.Repository.User.Get(req.Context(), session.UserID)
+	user, err := v.app.Repository.User().Get(req.Context(), session.UserID)
 	if err != nil {
 		slog.Error("User.Get", "err", err)
 		v.DisplayError(wr, req, "Cannot get user for session.")
@@ -108,12 +108,12 @@ func (v *view) newSession(wr http.ResponseWriter, req *http.Request, user model.
 	}
 
 	if v.Session != nil {
-		v.app.Repository.Session.Delete(req.Context(), v.Session.UserID)
+		v.app.Repository.Session().Delete(req.Context(), v.Session.UserID)
 	} else {
-		v.app.Repository.Session.Delete(req.Context(), user.ID)
+		v.app.Repository.Session().Delete(req.Context(), user.ID)
 	}
 
-	session, err = v.app.Repository.Session.Put(req.Context(), user.ID, session)
+	session, err = v.app.Repository.Session().Put(req.Context(), user.ID, session)
 	if err != nil {
 		v.Session = nil
 		slog.Error("Cannot save session", "err", err)

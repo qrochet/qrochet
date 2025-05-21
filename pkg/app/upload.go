@@ -47,7 +47,7 @@ func (q *Qrochet) getUpload(wr http.ResponseWriter, req *http.Request) {
 
 	id := req.PathValue("id")
 
-	image, err := q.Repository.Image.Get(req.Context(), id)
+	image, err := q.Repository.Image().Get(req.Context(), id)
 	if err != nil {
 		slog.Error("getUpload", "err", err)
 		wr.WriteHeader(http.StatusNotFound)

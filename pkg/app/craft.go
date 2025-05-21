@@ -29,7 +29,7 @@ func (q *Qrochet) getMyCraft(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	v.Craft.All, err = q.Repository.Craft.AllForUserID(req.Context(), v.Session.UserID)
+	v.Craft.All, err = q.Repository.Craft().AllForUserID(req.Context(), v.Session.UserID)
 	if err != nil {
 		slog.Error("getMyCraft", "err", err)
 		v.DisplayError(wr, req, "No crafts.")
@@ -93,7 +93,7 @@ func (q *Qrochet) postMyCraft(wr http.ResponseWriter, req *http.Request) {
 		}
 
 		ctx := req.Context()
-		upload, err = q.Repository.Image.Put(ctx, upload)
+		upload, err = q.Repository.Image().Put(ctx, upload)
 		if err != nil {
 			slog.Error("resizeImageJPEG", "err", err)
 			v.DisplayError(wr, req, "File save failed")
@@ -107,7 +107,7 @@ func (q *Qrochet) postMyCraft(wr http.ResponseWriter, req *http.Request) {
 		craft.Image = upload.ID
 		craft.UserID = v.Session.UserID
 
-		created, err := v.app.Repository.Craft.Put(ctx, craft.ID, *craft)
+		created, err := v.app.Repository.Craft().Put(ctx, craft.ID, *craft)
 		if err != nil {
 			slog.Error("Craft.Put", "err", err)
 			v.DisplayError(wr, req, "Failed to create craft.")
@@ -132,7 +132,7 @@ func (q *Qrochet) getMyCrafts(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	v.Craft.All, err = q.Repository.Craft.AllForUserID(req.Context(), v.Session.UserID)
+	v.Craft.All, err = q.Repository.Craft().AllForUserID(req.Context(), v.Session.UserID)
 	if err != nil {
 		slog.Error("getMyCrafts", "err", err)
 		v.DisplayError(wr, req, "No crafts.")

@@ -42,7 +42,7 @@ func (q *Qrochet) login(wr http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		existing, err := v.app.Repository.User.GetByEmail(req.Context(), v.Login.Email)
+		existing, err := v.app.Repository.User().GetByEmail(req.Context(), v.Login.Email)
 		if err != nil || existing == nil || existing.Email != v.Login.Email {
 			slog.Error("User.GetForEmail", "err", err)
 			v.DisplayError(wr, req, "This email address is not registered yet or the password is not correct")

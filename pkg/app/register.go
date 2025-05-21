@@ -123,7 +123,7 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 		user.Name = v.Register.Name
 		user.SetPassword(v.Register.Pass)
 
-		existing, err := v.app.Repository.User.GetByEmail(req.Context(), user.Email)
+		existing, err := v.app.Repository.User().GetByEmail(req.Context(), user.Email)
 		if err != nil {
 			slog.Error("User.GetByEmail", "err", err)
 			v.Register.regenerate()
@@ -138,7 +138,7 @@ func (q *Qrochet) register(wr http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		created, err := v.app.Repository.User.Put(req.Context(), user.ID, user)
+		created, err := v.app.Repository.User().Put(req.Context(), user.ID, user)
 		if err != nil {
 			slog.Error("User.Put", "err", err)
 			v.Register.regenerate()

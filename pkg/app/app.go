@@ -15,6 +15,7 @@ import "aidanwoods.dev/go-paseto"
 import (
 	"github.com/qrochet/qrochet/pkg/doc"
 	"github.com/qrochet/qrochet/pkg/mail"
+	"github.com/qrochet/qrochet/pkg/model"
 	"github.com/qrochet/qrochet/pkg/repo"
 )
 
@@ -44,7 +45,7 @@ type Qrochet struct {
 	http.Server
 	*RemoteAddrRateLimiter
 	*http.ServeMux
-	*repo.Repository
+	model.Repository
 	*template.Template
 	sub  fs.FS
 	Key  paseto.V4SymmetricKey

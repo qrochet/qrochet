@@ -20,10 +20,10 @@ type Repository struct {
 	*nsrv.Server
 	*nats.Conn
 	jetstream.JetStream
-	User    *UserMapper
-	Session *BasicMapper[model.Session]
-	Craft   *CraftMapper
-	Image   *UploadMapper
+	user    *UserMapper
+	session *BasicMapper[model.Session]
+	craft   *CraftMapper
+	image   *UploadMapper
 }
 
 func Open(nurl string) (r *Repository, err error) {
@@ -69,20 +69,20 @@ func Open(nurl string) (r *Repository, err error) {
 
 func (r *Repository) Setup(ctx context.Context) error {
 	var err error
-	r.User, err = NewUserMapper(ctx, r, "user")
+	r.user, err = NewUserMapper(ctx, r, "user")
 	if err != nil {
 		return err
 	}
-	r.Session, err = NewBasicMapper[model.Session](ctx, r, "session")
+	r.session, err = NewBasicMapper[model.Session](ctx, r, "session")
 	if err != nil {
 		return err
 	}
-	r.Craft, err = NewCraftMapper(ctx, r, "craft")
+	r.craft, err = NewCraftMapper(ctx, r, "craft")
 	if err != nil {
 		return err
 	}
 
-	r.Image, err = NewUploadMapper(ctx, r, "image")
+	r.image, err = NewUploadMapper(ctx, r, "image")
 	if err != nil {
 		return err
 	}
@@ -157,6 +157,10 @@ func (b *BasicMapper[T]) Put(ctx Context, key string, obj T) (T, error) {
 
 func (b *BasicMapper[T]) Purge(ctx Context, key string) error {
 	return b.KeyValue.Purge(ctx, key)
+}
+
+func (b *BasicMapper[T]) Delete(ctx Context, key string) error {
+	return b.KeyValue.Delete(ctx, key)
 }
 
 func (b *BasicMapper[T]) Keys(ctx Context, keys ...string) (chan (string), error) {
@@ -444,4 +448,20 @@ func NewUserMapper(ctx Context, r *Repository, name string) (*UserMapper, error)
 
 func (c *UserMapper) GetByEmail(ctx Context, email string) (*model.User, error) {
 	return c.BasicMapper.GetFirstMatch(ctx, func(u *model.User) bool { return u.Email == email })
+}
+
+func (r *Repository) User() model.UserMapper {
+	return r.user
+}
+
+func (r *Repository) Session() model.SessionMapper {
+	return r.session
+}
+
+func (r *Repository) Craft() model.CraftMapper {
+	return r.craft
+}
+
+func (r *Repository) Image() model.UploadMapper {
+	return r.image
 }

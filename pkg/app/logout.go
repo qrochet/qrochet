@@ -33,7 +33,7 @@ func (q *Qrochet) logout(wr http.ResponseWriter, req *http.Request) {
 	v.Logout.Submit, _ = strconv.ParseBool(req.FormValue("submit"))
 
 	if v.Logout.Submit {
-		err := v.app.Repository.Session.Delete(req.Context(), v.Session.UserID)
+		err := v.app.Repository.Session().Delete(req.Context(), v.Session.UserID)
 		if err != nil {
 			slog.Error("could not delete session", "err", err)
 		}
