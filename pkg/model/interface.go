@@ -60,3 +60,8 @@ type UserMapper interface {
 	BasicMapper[User]
 	GetByEmail(ctx Context, email string) (*User, error)
 }
+
+// Sender can send emails or simulates doing that.
+type Sender interface {
+	Send(Mail) error
+}

@@ -14,7 +14,6 @@ import "aidanwoods.dev/go-paseto"
 
 import (
 	"github.com/qrochet/qrochet/pkg/doc"
-	"github.com/qrochet/qrochet/pkg/mail"
 	"github.com/qrochet/qrochet/pkg/model"
 	"github.com/qrochet/qrochet/pkg/repo"
 )
@@ -49,7 +48,7 @@ type Qrochet struct {
 	*template.Template
 	sub  fs.FS
 	Key  paseto.V4SymmetricKey
-	msrv mail.Sender
+	msrv model.Sender
 }
 
 func New(ctx context.Context, s Settings) (*Qrochet, error) {
@@ -113,7 +112,7 @@ func (q *Qrochet) Close() {
 
 // SetMailSender sets the mail sender to use.
 // If not set or nil, no mails will be sent.
-func (q *Qrochet) SetMailSender(msrv mail.Sender) {
+func (q *Qrochet) SetMailSender(msrv model.Sender) {
 	q.msrv = msrv
 	if q.msrv == nil {
 		slog.Warn("sending of mails disabled")

@@ -11,6 +11,10 @@ import (
 	"net/smtp"
 )
 
+import (
+	"github.com/qrochet/qrochet/pkg/model"
+)
+
 // Server is a n SMTP server that can send emails.
 type Server struct {
 	Name      string // Name is a host:port combination.
@@ -19,12 +23,6 @@ type Server struct {
 	Host      string
 	Port      string
 	TLSConfig *tls.Config // TLSConfig is the TLS / SSL configuration.
-}
-
-// Sender is an interface that the mail.Server implements.
-type Sender interface {
-	// Send sends a mail, or returns an error on failure.
-	Send(m Mail) error
 }
 
 // NewServer returns a new mail server.
@@ -39,21 +37,8 @@ func NewServer(name, user, pass string) *Server {
 	return s
 }
 
-// Mail is a mail to send.
-type Mail struct {
-	From    string
-	To      string
-	Subject string
-	Body    string
-}
-
-func (m *Mail) Printf(form string, args ...any) {
-	m.Body += fmt.Sprintf(form, args...)
-}
-
-func (m *Mail) Println(args ...any) {
-	m.Body += fmt.Sprintln(args...)
-}
+// Mail is an alias to model.Mail.
+type Mail = model.Mail
 
 // Send sends a mail using the Server, or returns an error on failure.
 func (s Server) Send(m Mail) error {

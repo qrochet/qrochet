@@ -203,3 +203,21 @@ type Upload struct {
 	UserID        string    `json:"user_id"`
 	MIME          string    `json:"mime"`
 }
+
+// Mail is a mail to send.
+type Mail struct {
+	From    string
+	To      string
+	Subject string
+	Body    string
+}
+
+// Printf appends a formatted message to the body of the mail.
+func (m *Mail) Printf(form string, args ...any) {
+	m.Body += fmt.Sprintf(form, args...)
+}
+
+// Printf appends a message to the body of the mail followed by a newline.
+func (m *Mail) Println(args ...any) {
+	m.Body += fmt.Sprintln(args...)
+}
