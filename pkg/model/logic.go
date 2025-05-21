@@ -66,6 +66,9 @@ var (
 	// ErrorImageUpload means uploading an image file to the repository failed.
 	ErrorImageUpload = errors.New("image upload failed")
 
+	// ErrorImageGet means getting an image file from the repository failed.
+	ErrorImageGet = errors.New("image get failed")
+
 	// ErrorCraftCreate means creating a craft failed.
 	ErrorCraftCreate = errors.New("craft create failed")
 )
@@ -305,4 +308,19 @@ func (l *Logic) CraftsForSession(ctx Context, session *Session) (chan Craft, err
 		return nil, ErrorPleaseLogIn
 	}
 	return l.Craft().AllForUserID(ctx, session.UserID)
+}
+
+// GetImage returns an uploaded image for the session and ID
+func (l *Logic) GetImage(ctx Context, session *Session, id string) (*Upload, error) {
+	if session == nil || session.UserID == "" {
+		return nil, ErrorPleaseLogIn
+	}
+
+	file, err := l.Image().Get(ctx, id)
+	if err != nil {
+		slog.Error("GetImage", "err", err)
+		return nil, ErrorImageGet
+	}
+
+	return file, nil
 }
